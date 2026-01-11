@@ -31,6 +31,7 @@ position = Vector2(200, 0)
 mass = 6000000000000.001
 linear_velocity = Vector2(0, 30)
 role = 1
+produces_gravity = true
 mass = 6000000000000.001
 
 [node name="Intercept" parent="." instance=ExtResource("4_fc0e3")]
@@ -42,7 +43,7 @@ position = Vector2(190, 0)
 linear_velocity = Vector2(0, 40)
 
 [node name="FreeFall" parent="." instance=ExtResource("4_fc0e3")]
-position = Vector2(220, 0)
+position = Vector2(0, 220)
 
 [node name="NearFreeFall" parent="." instance=ExtResource("4_fc0e3")]
 position = Vector2(230, 0)

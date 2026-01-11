@@ -19,6 +19,8 @@ var v: Vector2
 
 var alpha: float        # 1 / a
 var t: float = 0.0      # time since epoch
+var dt: float  = 0.0
+var pchi:float = 0.0
 
 # --- Constants ---------------------------------------------------------------
 
@@ -48,8 +50,17 @@ func from_cartesian(relative_position: Vector2, relative_velocity: Vector2) -> v
 # --- Propagation -------------------------------------------------------------
 
 func propagate(dt: float) -> void:
-	# Advance time ONLY
 	t += dt
+	self.dt = dt
+	
+	# Redundancy: If the orbit is elliptical (alpha > 0), wrap time by the period
+	if alpha > 0.0:
+		var period = TAU / (pow(alpha, 1.5) * sqrt(mu))
+		if t > period:
+			t = fmod(t, period)
+			# Resetting chi slightly helps prevent pchi from carrying 
+			# error across the modulo jump
+			pchi = fmod(pchi, sqrt(alpha) * period)
 	#print(t)
 
 
@@ -66,9 +77,13 @@ func to_cartesian() -> State2D:
 	var sqrt_mu := sqrt(mu)
 
 	# --- Initial guess for χ (robust for all conics) ---
-	var chi:float = sqrt_mu * abs(alpha) * t
-	if alpha == 0.0:
-		chi = sqrt_mu * t / r0mag
+	var chi:float
+	if(dt<1):
+		chi = pchi
+	else:
+		chi = sqrt_mu * abs(alpha) * t
+		if alpha == 0.0:
+			chi = sqrt_mu * t / r0mag
 
 	# --- Newton solve ---
 	for _i in range(MAX_ITERS):
@@ -89,12 +104,14 @@ func to_cartesian() -> State2D:
 		)
 
 		var delta := F / dF
+		# Clamp the step to prevent it from flying into infinity
+		delta = clamp(delta, -100.0, 100.0) 
 		chi -= delta
 
 		if abs(delta) < TOL:
 			
 			break
-
+	pchi = chi
 	# --- Lagrange coefficients ---
 	var zf := alpha * chi * chi
 	var Cf := stumpff_C(zf)
