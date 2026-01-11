@@ -1,0 +1,49 @@
+[gd_scene load_steps=3 format=3 uid="uid://tbayrlg2dqem"]
+
+[ext_resource type="Script" uid="uid://vyfi6moqriai" path="res://core/OrbitalMechanics/Binding/RigidBodyOrbitBinding.gd" id="1_80nbo"]
+[ext_resource type="PackedScene" uid="uid://do4t8angm5s7v" path="res://scenes/Craft.tscn" id="4_fc0e3"]
+
+[node name="Universe" type="Node2D"]
+
+[node name="HighEllipse" parent="." instance=ExtResource("4_fc0e3")]
+position = Vector2(460, 0)
+linear_velocity = Vector2(0, 1)
+
+[node name="Sol" type="RigidBody2D" parent="."]
+mass = 6e+15
+script = ExtResource("1_80nbo")
+produces_gravity = true
+mass = 6e+15
+
+[node name="Camera2D" type="Camera2D" parent="Sol"]
+
+[node name="Label" type="Label" parent="Sol"]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "sun"
+
+[node name="Hyperbolic" parent="." instance=ExtResource("4_fc0e3")]
+position = Vector2(100, 0)
+linear_velocity = Vector2(20, 100)
+
+[node name="Ellipse" parent="." instance=ExtResource("4_fc0e3")]
+position = Vector2(200, 0)
+mass = 6000000000000.001
+linear_velocity = Vector2(0, 30)
+role = 1
+mass = 6000000000000.001
+
+[node name="Intercept" parent="." instance=ExtResource("4_fc0e3")]
+position = Vector2(180, 0)
+linear_velocity = Vector2(0, 35)
+
+[node name="Exit" parent="." instance=ExtResource("4_fc0e3")]
+position = Vector2(190, 0)
+linear_velocity = Vector2(0, 40)
+
+[node name="FreeFall" parent="." instance=ExtResource("4_fc0e3")]
+position = Vector2(220, 0)
+
+[node name="NearFreeFall" parent="." instance=ExtResource("4_fc0e3")]
+position = Vector2(230, 0)
+linear_velocity = Vector2(0, 0.1)

@@ -1,0 +1,58 @@
+[gd_scene load_steps=7 format=3 uid="uid://tbayrlg2dqem"]
+
+[ext_resource type="Script" path="res://FPS.gd" id="2_oihhk"]
+[ext_resource type="Script" path="res://Gravity.gd" id="2_vmnup"]
+[ext_resource type="Script" path="res://Planets.gd" id="2_xqrp2"]
+[ext_resource type="Script" path="res://OrbitDebug.gd" id="3_w7mgw"]
+
+[sub_resource type="SystemFont" id="SystemFont_luur1"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_naeyl"]
+font = SubResource("SystemFont_luur1")
+font_color = Color(0, 0, 0, 1)
+
+[node name="Node2D" type="Node2D"]
+position = Vector2(-3072, 10624)
+
+[node name="World" type="Node" parent="."]
+
+[node name="Sol" type="StaticBody2D" parent="World"]
+metadata/Radius = 1000.0
+metadata/SurfaceG = 10.0
+metadata/GenerationParameter = PackedVector2Array()
+
+[node name="Planets" type="Node" parent="World/Sol"]
+script = ExtResource("2_xqrp2")
+
+[node name="RigidBody2D" type="RigidBody2D" parent="World/Sol"]
+position = Vector2(0, -3000)
+linear_velocity = Vector2(180, 0)
+script = ExtResource("2_vmnup")
+
+[node name="Camera2D" type="Camera2D" parent="World/Sol/RigidBody2D"]
+position = Vector2(-85, 3040)
+zoom = Vector2(0.04, 0.04)
+
+[node name="Label" type="Label" parent="World/Sol/RigidBody2D/Camera2D"]
+offset_left = -14089.0
+offset_top = -7788.0
+offset_right = -8960.0
+offset_bottom = -7127.0
+text = "FPS Counter Here"
+label_settings = SubResource("LabelSettings_naeyl")
+max_lines_visible = 1
+script = ExtResource("2_oihhk")
+
+[node name="Label2" type="Label" parent="World/Sol/RigidBody2D/Camera2D"]
+offset_left = -13256.0
+offset_top = 5989.0
+offset_right = -5541.0
+offset_bottom = 7713.0
+text = "FPS Counter Here
+Newline is g o n e"
+label_settings = SubResource("LabelSettings_naeyl")
+autowrap_mode = 3
+max_lines_visible = 1
+script = ExtResource("3_w7mgw")
+
+[node name="Node" type="Node" parent="."]

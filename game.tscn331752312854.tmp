@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://tbayrlg2dqem"]
+
+[ext_resource type="Script" uid="uid://vyfi6moqriai" path="res://OrbitalMechanics/Binding/RigidBodyOrbitBinding.gd" id="1_80nbo"]
+
+[node name="Universe" type="Node2D"]
+
+[node name="RigidBody2D" type="RigidBody2D" parent="."]
+custom_integrator = true
+script = ExtResource("1_80nbo")

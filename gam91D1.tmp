@@ -1,0 +1,60 @@
+[gd_scene load_steps=2 format=3 uid="uid://tbayrlg2dqem"]
+
+[ext_resource type="Script" path="res://Planets.gd" id="1_fhnbd"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="World" type="Node" parent="."]
+
+[node name="Sol" type="StaticBody2D" parent="World"]
+position = Vector2(-6, -8)
+script = ExtResource("1_fhnbd")
+metadata/Radius = 1000.0
+metadata/SurfaceG = 10.0
+metadata/GenerationParameter = PackedVector2Array()
+
+[node name="Terra" type="StaticBody2D" parent="World/Sol"]
+position = Vector2(51831, 24233)
+script = ExtResource("1_fhnbd")
+metadata/Radius = 600.0
+metadata/SurfaceG = 1.0
+metadata/GenerationParameter = PackedVector2Array(40, 100, 80, 30, 500, 10)
+
+[node name="Camera2D" type="Camera2D" parent="World/Sol/Terra"]
+position = Vector2(41649, 10688)
+zoom = Vector2(0.01, 0.01)
+
+[node name="Mun" type="StaticBody2D" parent="World/Sol/Terra"]
+position = Vector2(57380, -1324)
+script = ExtResource("1_fhnbd")
+metadata/Radius = 90.0
+metadata/SurfaceG = 0.11
+metadata/GenerationParameter = PackedVector2Array(1, 10)
+
+[node name="Mun2" type="StaticBody2D" parent="World/Sol/Terra"]
+position = Vector2(77604, 1876)
+script = ExtResource("1_fhnbd")
+metadata/Radius = 90.0
+metadata/SurfaceG = 0.11
+metadata/GenerationParameter = PackedVector2Array(1, 10)
+
+[node name="Mun3" type="StaticBody2D" parent="World/Sol/Terra"]
+position = Vector2(98596, 2644)
+script = ExtResource("1_fhnbd")
+metadata/Radius = 90.0
+metadata/SurfaceG = 0.11
+metadata/GenerationParameter = PackedVector2Array(1, 10)
+
+[node name="Mun4" type="StaticBody2D" parent="World/Sol/Terra"]
+position = Vector2(83236, -23724)
+script = ExtResource("1_fhnbd")
+metadata/Radius = 90.0
+metadata/SurfaceG = 0.11
+metadata/GenerationParameter = PackedVector2Array(1, 10)
+
+[node name="Mun5" type="StaticBody2D" parent="World/Sol/Terra"]
+position = Vector2(23618, -7489)
+script = ExtResource("1_fhnbd")
+metadata/Radius = 90.0
+metadata/SurfaceG = 0.11
+metadata/GenerationParameter = PackedVector2Array(1, 10)
