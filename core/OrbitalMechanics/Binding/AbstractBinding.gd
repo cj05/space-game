@@ -43,6 +43,9 @@ var visit_state := VisitState.UNVISITED
 # Cached reference to owning spatial node
 func get_body() -> Node:
 	return self as Node
+	
+# --- cached force appliers -------------------------------------------------
+var impulse:Vector2 = Vector2.ZERO
 
 # --- lifecycle -------------------------------------------------------------
 
@@ -111,3 +114,5 @@ func get_orbit_dir()->float:
 	
 func get_eccentricity()->float:
 	return sim_solver.get_eccentricity()
+func integrate_impulse(impulse:Vector2):
+	pass

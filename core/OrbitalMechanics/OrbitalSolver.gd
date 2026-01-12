@@ -76,7 +76,7 @@ func solve_orbit(body: AbstractBinding, dt: float):
 		return
 	
 	if body.solver_dirty:
-		#print("solver dirt")
+		print("solver dirt", r_pos, r_vel)
 		solver.from_cartesian(r_pos, r_vel)
 		body.solver_dirty = false
 	

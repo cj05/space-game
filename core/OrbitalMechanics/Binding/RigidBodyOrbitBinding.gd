@@ -40,3 +40,11 @@ func compute_deviation() -> float:
 	#print("k ",dr," ",dv,body.linear_velocity,next_vel)
 
 	return sqrt((dr / L) * (dr / L) + (dv / V) * (dv / V))
+	
+# --- force hooks -----------------------------------------------------------
+
+func apply_central_impulse_hook(impulse: Vector2):
+	self.impulse += impulse
+
+func integrate_impulse(impulse:Vector2):
+	sim_velocity += impulse

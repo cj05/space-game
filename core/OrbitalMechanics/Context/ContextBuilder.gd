@@ -12,10 +12,17 @@ func build(model: OrbitalModel) -> void:
 		if body.sim_context != new_ctx:
 			body.sim_context = new_ctx
 
+
+
 func update_context(body: AbstractBinding, model: OrbitalModel, old: OrbitalContext) -> OrbitalContext:
 	# 1. Perturbation check (doesn't change hierarchy)
 	if body.compute_deviation() > tol:
 		body.solver_dirty = true
+	
+	if body.impulse.length() > 0:
+		body.solver_dirty = true
+		body.integrate_impulse(body.impulse)
+		body.impulse = Vector2.ZERO
 	
 	# 2. Bootstrap if missing
 	if old == null:
@@ -47,8 +54,17 @@ func update_context(body: AbstractBinding, model: OrbitalModel, old: OrbitalCont
 			if d < 10000: # Replace with a proper distance check if needed
 				var best_p = OrbitalHierarchy.find_best_primary(body, model)
 				if best_p: return _make_context(body, best_p, model)
-
+	update_relative_state(body,old)
 	return old
+	
+func update_relative_state(body: AbstractBinding, ctx: OrbitalContext) -> void:
+	if ctx.primary == null:
+		return
+
+	ctx.r_primary = body.sim_position - ctx.primary.sim_position
+	ctx.v_primary = body.sim_velocity - ctx.primary.sim_velocity
+
+
 
 # --- Factories ---
 
@@ -74,6 +90,7 @@ func _make_context(body: AbstractBinding, parent: AbstractBinding, model: Orbita
 	ctx.mu = parent.get_mu()
 	ctx.r_primary = body.sim_position - parent.sim_position
 	ctx.v_primary = body.sim_velocity - parent.sim_velocity
+	print(ctx.r_primary)
 	body.solver_dirty = true
 	return ctx
 

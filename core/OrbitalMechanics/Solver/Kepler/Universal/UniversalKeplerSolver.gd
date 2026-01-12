@@ -114,7 +114,7 @@ func to_cartesian() -> State2D:
 			
 			break
 	pchi = chi
-	print(_cnt)
+	#print(_cnt)
 	# --- Lagrange coefficients ---
 	var zf := alpha * chi * chi
 	var Cf := stumpff_C(zf)
