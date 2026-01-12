@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3 uid="uid://e65nu80m6yv"]
+
+[ext_resource type="Script" uid="uid://vyfi6moqriai" path="res://core/OrbitalMechanics/Binding/RigidBodyOrbitBinding.gd" id="1_744xv"]
+[ext_resource type="Script" uid="uid://bvec3d05on2vp" path="res://core/OrbitalMechanics/Draw/OrbitPredictor.gd" id="2_2ucv6"]
+[ext_resource type="Script" uid="uid://bmvtv3ymwtlsh" path="res://LineTracer.gd" id="3_sskfm"]
+
+[node name="RigidBody2D" type="RigidBody2D"]
+mass = 6000000000000.0
+script = ExtResource("1_744xv")
+role = 1
+produces_gravity = true
+mass = 6000000000000.0
+
+[node name="LinePredictorDebugger" type="Line2D" parent="." node_paths=PackedStringArray("tracking_node")]
+top_level = true
+position = Vector2(0, 100)
+joint_mode = 2
+antialiased = true
+script = ExtResource("2_2ucv6")
+tracking_node = NodePath("..")
+color = Color(0.9386945, 1.347661e-06, 0.52546465, 1)
+
+[node name="Label" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "planet
+"
+metadata/_edit_use_anchors_ = true
+
+[node name="LineTracerDebugger" type="Line2D" parent="." node_paths=PackedStringArray("tracking_node")]
+top_level = true
+position = Vector2(0, 100)
+joint_mode = 2
+antialiased = true
+script = ExtResource("3_sskfm")
+tracking_node = NodePath("..")
+max_points = 100
+color = Color(0.90839905, 0.19785792, 0.4347616, 1)
