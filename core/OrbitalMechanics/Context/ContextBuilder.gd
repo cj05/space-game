@@ -6,6 +6,10 @@ var hysteresis := 0.98
 func build(model: OrbitalModel) -> void:
 	var bodies = model.values()
 	
+	# Sort descending: Stars -> Planets -> Moons -> Ships
+	# This ensures Earth knows it orbits Sun BEFORE Moon asks what Earth orbits.
+	bodies.sort_custom(func(a, b): return a.mass > b.mass) # fix later
+	
 	for body in model.values():
 		# Only update if necessary or if it has no context
 		var new_ctx = update_context(body, model, body.sim_context)

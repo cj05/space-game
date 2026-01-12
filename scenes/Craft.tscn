@@ -22,7 +22,6 @@ tracking_node = NodePath("..")
 offset_right = 40.0
 offset_bottom = 23.0
 text = "ship"
-metadata/_edit_use_anchors_ = true
 
 [node name="LineTracerDebugger" type="Line2D" parent="." node_paths=PackedStringArray("tracking_node")]
 top_level = true
@@ -32,4 +31,4 @@ antialiased = true
 script = ExtResource("3_lhxn1")
 tracking_node = NodePath("..")
 max_points = 100
-color = Color(0.46370542, 0.52324194, 0.66524124, 1)
+color = Color(0.24790499, 0.6017281, 0.45906103, 1)

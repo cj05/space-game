@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://e65nu80m6yv"]
+[gd_scene load_steps=4 format=3 uid="uid://cqhqlinc5j3nh"]
 
 [ext_resource type="Script" uid="uid://vyfi6moqriai" path="res://core/OrbitalMechanics/Binding/RigidBodyOrbitBinding.gd" id="1_744xv"]
 [ext_resource type="Script" uid="uid://bvec3d05on2vp" path="res://core/OrbitalMechanics/Draw/OrbitPredictor.gd" id="2_2ucv6"]

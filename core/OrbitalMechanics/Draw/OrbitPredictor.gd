@@ -1,7 +1,7 @@
 extends Line2D
 class_name OrbitPredictor
 
-@export var tracking_node: Node
+@export var tracking_node: Node 
 @export var max_points := 100
 @export var step_size := 0.1
 @export var line_width := 2.0
@@ -93,8 +93,7 @@ func _update_gradient(n: int):
 		var t := float(i) / float(n - 1)
 		
 		# Apply quadratic fade
-		var x = 0.4
-		var alpha = pow(1.0 - t, 2.0) * (1-x) + x
+		var alpha = pow(1.0 - t, 2.0) * 0.8 
 		
 		offsets.append(t)
 		colors.append(Color(color.r, color.g, color.b, alpha))
