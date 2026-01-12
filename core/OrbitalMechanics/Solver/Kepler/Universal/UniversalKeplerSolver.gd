@@ -20,12 +20,12 @@ var v: Vector2
 var alpha: float        # 1 / a
 var t: float = 0.0      # time since epoch
 var dt: float  = 0.0
-var pchi:float = 0.0
+var pchi:float = 0.0    # for better newt. guess
 
 # --- Constants ---------------------------------------------------------------
 
 const MAX_ITERS := 80
-const TOL := 1e-16
+const TOL := 1e-13
 
 # --- Initialization ----------------------------------------------------------
 
@@ -86,7 +86,9 @@ func to_cartesian() -> State2D:
 			chi = sqrt_mu * t / r0mag
 
 	# --- Newton solve ---
+	var _cnt = 0
 	for _i in range(MAX_ITERS):
+		_cnt+=1
 		var z:float = alpha * chi * chi
 		var C:float = stumpff_C(z)
 		var S:float = stumpff_S(z)
@@ -112,6 +114,7 @@ func to_cartesian() -> State2D:
 			
 			break
 	pchi = chi
+	print(_cnt)
 	# --- Lagrange coefficients ---
 	var zf := alpha * chi * chi
 	var Cf := stumpff_C(zf)
