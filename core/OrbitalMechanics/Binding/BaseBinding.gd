@@ -12,3 +12,6 @@ func apply_displacement(state) -> void:
 
 func pull_from_scene() -> void:
 	assert(false, "pull_from_scene must be implemented by subclass")
+
+func integrate_uncatched_impulse():
+	pull_from_scene()

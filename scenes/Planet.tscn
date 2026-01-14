@@ -1,14 +1,19 @@
-[gd_scene load_steps=4 format=3 uid="uid://e65nu80m6yv"]
+[gd_scene load_steps=6 format=3 uid="uid://cqhqlinc5j3nh"]
 
 [ext_resource type="Script" uid="uid://vyfi6moqriai" path="res://core/OrbitalMechanics/Binding/RigidBodyOrbitBinding.gd" id="1_744xv"]
 [ext_resource type="Script" uid="uid://bvec3d05on2vp" path="res://core/OrbitalMechanics/Draw/OrbitPredictor.gd" id="2_2ucv6"]
 [ext_resource type="Script" uid="uid://bmvtv3ymwtlsh" path="res://LineTracer.gd" id="3_sskfm"]
+[ext_resource type="Script" uid="uid://bdtqvbmsmi8ks" path="res://scenes/SOITracer.gd" id="4_2ucv6"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_744xv"]
+radius = 100.0
 
 [node name="RigidBody2D" type="RigidBody2D"]
 mass = 6000000000000.0
 script = ExtResource("1_744xv")
 role = 1
 produces_gravity = true
+respond_collision = false
 mass = 6000000000000.0
 
 [node name="LinePredictorDebugger" type="Line2D" parent="." node_paths=PackedStringArray("tracking_node")]
@@ -36,3 +41,11 @@ script = ExtResource("3_sskfm")
 tracking_node = NodePath("..")
 max_points = 100
 color = Color(0.90839905, 0.19785792, 0.4347616, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_744xv")
+debug_color = Color(0.37577578, 0.48711544, 0.970794, 0.41960785)
+
+[node name="Line2D" type="Line2D" parent="." node_paths=PackedStringArray("tracking_node")]
+script = ExtResource("4_2ucv6")
+tracking_node = NodePath("..")

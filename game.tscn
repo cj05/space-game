@@ -7,12 +7,10 @@
 [node name="Universe" type="Node2D"]
 
 [node name="Sol" type="RigidBody2D" parent="."]
-mass = 6e+15
+mass = 6.572652977462916e+15
 script = ExtResource("1_80nbo")
 produces_gravity = true
-mass = 6e+15
-
-[node name="Camera2D" type="Camera2D" parent="Sol"]
+mass = 6.572652977462916e+15
 
 [node name="Label" type="Label" parent="Sol"]
 offset_right = 40.0
@@ -20,11 +18,15 @@ offset_bottom = 23.0
 text = "sun"
 
 [node name="Intercept" parent="." instance=ExtResource("4_fc0e3")]
-position = Vector2(180, 0)
-linear_velocity = Vector2(0, 35)
+position = Vector2(1000, -150)
+linear_velocity = Vector2(0, 20)
 
-[node name="Earth" parent="." instance=ExtResource("3_feb5d")]
-position = Vector2(200, 0)
-mass = 60000000000000.0
-linear_velocity = Vector2(0, 44.75)
-mass = 60000000000000.0
+[node name="Camera2D" type="Camera2D" parent="Intercept"]
+zoom = Vector2(5, 5)
+
+[node name="Earth" parent="." node_paths=PackedStringArray("fixed_primary_node") instance=ExtResource("3_feb5d")]
+position = Vector2(1000, 0)
+mass = 117575190800988.0
+linear_velocity = Vector2(0, 20.944)
+fixed_primary_node = NodePath("../Sol")
+mass = 117575190800988.0

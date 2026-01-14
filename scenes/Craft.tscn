@@ -1,9 +1,12 @@
-[gd_scene load_steps=5 format=3 uid="uid://do4t8angm5s7v"]
+[gd_scene load_steps=6 format=3 uid="uid://do4t8angm5s7v"]
 
 [ext_resource type="Script" uid="uid://vyfi6moqriai" path="res://core/OrbitalMechanics/Binding/RigidBodyOrbitBinding.gd" id="1_sa3op"]
 [ext_resource type="Script" uid="uid://bmvtv3ymwtlsh" path="res://LineTracer.gd" id="3_lhxn1"]
 [ext_resource type="Script" uid="uid://bvec3d05on2vp" path="res://core/OrbitalMechanics/Draw/OrbitPredictor.gd" id="3_qrsei"]
 [ext_resource type="Script" uid="uid://dl5jt8w85ssjs" path="res://pertubation_generator.gd" id="4_lhxn1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lhxn1"]
+size = Vector2(3, 12)
 
 [node name="RigidBody2D" type="RigidBody2D"]
 mass = 1.0
@@ -23,6 +26,8 @@ tracking_node = NodePath("..")
 offset_right = 40.0
 offset_bottom = 23.0
 text = "ship"
+horizontal_alignment = 1
+vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
 [node name="LineTracerDebugger" type="Line2D" parent="." node_paths=PackedStringArray("tracking_node")]
@@ -33,7 +38,10 @@ antialiased = true
 script = ExtResource("3_lhxn1")
 tracking_node = NodePath("..")
 max_points = 100
-color = Color(0.46370542, 0.52324194, 0.66524124, 1)
+color = Color(1, 1, 1, 1)
 
 [node name="Node" type="Node" parent="."]
 script = ExtResource("4_lhxn1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_lhxn1")

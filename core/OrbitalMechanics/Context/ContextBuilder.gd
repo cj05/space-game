@@ -18,6 +18,7 @@ func update_context(body: AbstractBinding, model: OrbitalModel, old: OrbitalCont
 	# 1. Perturbation check (doesn't change hierarchy)
 	if body.compute_deviation() > tol:
 		body.solver_dirty = true
+		body.integrate_uncatched_impulse() #collision/other impulses
 	
 	if body.impulse.length() > 0:
 		body.solver_dirty = true

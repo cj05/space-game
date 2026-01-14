@@ -10,6 +10,7 @@ class_name AbstractBinding
 
 @export var produces_gravity: bool = false
 @export var receives_gravity: bool = true
+@export var respond_collision: bool = true
 
 ## Specifies the parent it will be orbiting around
 ## Leave null if you want it to dynamically calculate it
@@ -58,8 +59,35 @@ func _exit_tree() -> void:
 	_unregister()
 	
 func _integrate_forces(state:PhysicsDirectBodyState2D) -> void:
-	apply_displacement(state)
+	
+	
+	if not collision_handle(state):
+		apply_displacement(state)
 	#print(state.linear_velocity)
+	
+
+func collision_handle(state:PhysicsDirectBodyState2D) -> bool:
+	
+	if(respond_collision):
+		var contact_count := state.get_contact_count()
+		#print(contact_count)
+		for i in range(contact_count):
+			var collider := state.get_contact_collider_object(i)
+			var position := state.get_contact_local_position(i)
+			var normal := state.get_contact_local_normal(i)
+			var impulse := state.get_contact_impulse(i)
+
+			if collider:
+				print("Contact no",i)
+				#print("Collided with:", collider.name)
+				#print("Normal:", normal)
+				print("Impulse:", impulse)
+				
+				apply_immediate_impulse(impulse)
+				
+		if(contact_count > 0):
+			return true
+	return false
 
 # --- registration ----------------------------------------------------------
 
@@ -116,3 +144,13 @@ func get_eccentricity()->float:
 	return sim_solver.get_eccentricity()
 func integrate_impulse(impulse:Vector2):
 	pass
+func integrate_uncatched_impulse():
+	pass
+func apply_central_impulse_hook(impulse: Vector2):
+	pass
+func apply_immediate_impulse(impulse: Vector2):
+	pass
+func get_global_position()->Vector2:
+	return Vector2.ZERO
+func get_soi_radius()->float:
+	return 0
