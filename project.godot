@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 OrbitalMechanics="*res://core/OrbitalMechanics/OrbitalMechanics.gd"
+Scheduler="*res://core/Physics/Scheduler.gd"
 
 [editor]
 
