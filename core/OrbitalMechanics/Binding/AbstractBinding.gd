@@ -46,7 +46,8 @@ func get_body() -> Node:
 	return self as Node
 	
 # --- cached force appliers -------------------------------------------------
-var impulse:Vector2 = Vector2.ZERO
+var constant_forces: Vector2 = Vector2.ZERO
+var pending_impulse: Vector2 = Vector2.ZERO
 
 # --- lifecycle -------------------------------------------------------------
 
@@ -67,26 +68,6 @@ func _integrate_forces(state:PhysicsDirectBodyState2D) -> void:
 	
 
 func collision_handle(state:PhysicsDirectBodyState2D) -> bool:
-	
-	if(respond_collision):
-		var contact_count := state.get_contact_count()
-		#print(contact_count)
-		for i in range(contact_count):
-			var collider := state.get_contact_collider_object(i)
-			var position := state.get_contact_local_position(i)
-			var normal := state.get_contact_local_normal(i)
-			var impulse := state.get_contact_impulse(i)
-
-			if collider:
-				print("Contact no",i)
-				#print("Collided with:", collider.name)
-				#print("Normal:", normal)
-				print("Impulse:", impulse)
-				
-				apply_immediate_impulse(impulse)
-				
-		if(contact_count > 0):
-			return true
 	return false
 
 # --- registration ----------------------------------------------------------
@@ -154,3 +135,7 @@ func get_global_position()->Vector2:
 	return Vector2.ZERO
 func get_soi_radius()->float:
 	return 0
+func add_force(f: Vector2):
+	constant_forces += f
+func get_accumulated_acceleration() -> Vector2:
+	return constant_forces / mass if mass > 0 else Vector2.ZERO

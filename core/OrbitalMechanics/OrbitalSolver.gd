@@ -1,7 +1,7 @@
 class_name OrbitalSolver
 
 # --- pre-initialization ----------------------------------------------------
-var context_builder := ContextBuilder.new()
+var context_builder := OrbitalContextBuilder.new()
 var model: OrbitalModel
 
 var SolverMap = {
@@ -40,22 +40,59 @@ func set_model(model_in: OrbitalModel):
 	
 # --- lifecycle ----------------------------------------------------
 
-func step_all(delta:float):
-	## For future reference, unimpl
-	## 0 - Precompute N body logic here
+# OrbitalSolver.gd
+
+func _apply_kick(dt_factor: float, apply_impulses: bool):
+	for body in model.values():
+		var accel = body.get_accumulated_acceleration()
+		
+		# Apply partial force kick
+		body.sim_velocity += accel * dt_factor
+		
+		# Apply full impulses only during the first kick phase
+		if apply_impulses and body.pending_impulse != Vector2.ZERO:
+			body.sim_velocity += body.pending_impulse / body.mass
+			body.pending_impulse = Vector2.ZERO
+			body.solver_dirty = true
+		
+		# If the velocity changed, the Keplerian orbit is now invalid
+		if accel != Vector2.ZERO:
+			body.solver_dirty = true
+
+func step_all(delta: float):
+	# PHASE 1: KICK (Half force, Full impulse)
+	_apply_kick(delta * 0.5, true)
 	
-	## 1 - Build Context for Orbits
-	context_builder.build(model)
-	
-	## 2 - Compute Orbits
+	# PHASE 2: DRIFT
+	context_builder.build_model(model)
 	for candidate in model.values():
-		solve_orbit(candidate,delta)
+		solve_orbit(candidate, delta)
 	
-	## 3 - Collapse it back to reality
+	# PHASE 3: KICK (Final half force)
+	_apply_kick(delta * 0.5, false)
+	
+	# PHASE 4: COLLAPSE
 	propagate_orbit(model)
 	
+	# Reset constant forces AFTER the final kick is processed
+	for body in model.values():
+		body.constant_forces = Vector2.ZERO
+	
 
+# Inside AbstractBinding.gd or a PhysicsHandler
+const TOLERANCE := 1e-4
 
+func process_impulse(body: AbstractBinding):
+	# Handle external perturbations
+	if body.compute_deviation() > TOLERANCE:
+		body.solver_dirty = true
+		body.integrate_uncatched_impulse()
+	
+	# Handle discrete impulses (Explosions, Engines)
+	if body.pending_impulse.length() > 0:
+		body.solver_dirty = true
+		body.integrate_impulse(body.pending_impulse) 
+		body.pending_impulse = Vector2.ZERO
 
 func solve_orbit(body: AbstractBinding, dt: float):
 	var solver = get_solver(body)

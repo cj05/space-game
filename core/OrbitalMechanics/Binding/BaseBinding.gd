@@ -15,3 +15,26 @@ func pull_from_scene() -> void:
 
 func integrate_uncatched_impulse():
 	pull_from_scene()
+	
+func collision_handle(state:PhysicsDirectBodyState2D) -> bool:
+	
+	if(respond_collision):
+		var contact_count := state.get_contact_count()
+		#print(contact_count)
+		for i in range(contact_count):
+			var collider := state.get_contact_collider_object(i)
+			var position := state.get_contact_local_position(i)
+			var normal := state.get_contact_local_normal(i)
+			var impulse := state.get_contact_impulse(i)
+
+			if collider:
+				print("Contact no",i)
+				#print("Collided with:", collider.name)
+				#print("Normal:", normal)
+				print("Impulse:", impulse)
+				
+				apply_immediate_impulse(impulse)
+				
+		if(contact_count > 0):
+			return true
+	return false

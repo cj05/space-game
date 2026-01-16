@@ -26,7 +26,7 @@ var escape_radius: float = 0.0
 
 # --- orbit insertion query
 
-var capture_candidates: Array[AbstractBinding] = []
+var capture_candidates: Array = []
 
 # --- validity --------------------------------------------------------------
 
