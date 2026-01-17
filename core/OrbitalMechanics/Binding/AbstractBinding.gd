@@ -159,7 +159,11 @@ func get_parent_binding()->AbstractBinding:
 	
 func assign_parent(parent:AbstractBinding):
 	print(parent)
-	reparent(parent)
+	
+	if self.get_parent() == null:
+		parent.add_child(self)
+	else:
+		self.reparent(parent)
 	
 func _on_initial_bind(parent: AbstractBinding) -> void:
 	# Hard bind, no exit logic
