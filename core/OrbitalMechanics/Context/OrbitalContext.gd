@@ -5,11 +5,6 @@ extends RefCounted
 
 var subject: AbstractBinding        # The body being solved
 
-# --- dominant bodies -------------------------------------------------------
-
-var primary: AbstractBinding = null        # Main gravity reference
-var secondary: AbstractBinding = null  # Optional (Lagrange / transitions)
-
 # --- strength metrics ------------------------------------------------------
 
 var primary_accel: float = 0.0

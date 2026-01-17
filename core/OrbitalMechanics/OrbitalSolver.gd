@@ -18,7 +18,8 @@ var SolverMap = {
 
 func get_solver(body: AbstractBinding) -> AbstractSolver:
 	if(body.sim_solver == null): 
-		body.sim_solver = get_solver_for_type(body.role)
+		#print("H")
+		create_solver(body)
 	return body.sim_solver 
 	
 func create_solver(body: AbstractBinding) -> AbstractSolver:
@@ -61,11 +62,13 @@ func _apply_kick(dt_factor: float, apply_impulses: bool):
 
 func step_all(delta: float):
 	# PHASE 1: KICK (Half force, Full impulse)
+	
 	_apply_kick(delta * 0.5, true)
 	
 	# PHASE 2: DRIFT
 	context_builder.build_model(model)
 	for candidate in model.values():
+		#print("hi ",model.values())
 		solve_orbit(candidate, delta)
 	
 	# PHASE 3: KICK (Final half force)
@@ -107,6 +110,7 @@ func solve_orbit(body: AbstractBinding, dt: float):
 	
 	var r_pos = context.r_primary
 	var r_vel = context.v_primary
+	#print(r_pos,r_vel)
 	
 	if(r_pos == Vector2.ZERO and r_vel == Vector2.ZERO):
 		body.temp_rel_state2D = State2D.new(Vector2.ZERO,Vector2.ZERO)
@@ -121,7 +125,7 @@ func solve_orbit(body: AbstractBinding, dt: float):
 	var state:State2D = solver.to_cartesian()
 	body.temp_rel_state2D = state
 	if is_vec2_nan(state.r) or is_vec2_nan(state.v):
-		print(state.r,state.v,r_pos,r_vel,context.primary)
+		print("bad",state.r,state.v,r_pos,r_vel,body.get_parent_binding())
 	#print(state.r,state.v)
 
 
@@ -151,7 +155,7 @@ func calculate_state(model: OrbitalModel, candidate: AbstractBinding) -> State2D
 	# recursively call
 	var out = candidate.temp_rel_state2D
 	#print(out.r,out.v," ",candidate)
-	var parent = candidate.sim_context.primary
+	var parent = candidate.get_parent_binding()
 	if(parent and parent != candidate):
 		out = out.add(calculate_state(model,parent))
 	if out:

@@ -4,8 +4,9 @@ const MAX_RECURSION_DEPTH = 10
 
 ## Laplace SOI formula: r_soi = a * (m/M)^(2/5)
 static func compute_soi_radius(child: AbstractBinding, parent: AbstractBinding) -> float:
+	
 	if child == parent or not parent: return INF
-	var distance := child.sim_position.distance_to(parent.sim_position)
+	var distance := child.get_global_position().distance_to(parent.get_global_position())
 	return distance * pow(child.mass / parent.mass, 0.4)
 
 ## Prevents infinite loops and circular orbits (A orbits B orbits A)
@@ -13,7 +14,7 @@ static func is_descendant_of(potential_parent: AbstractBinding, subject: Abstrac
 	var current = potential_parent
 	for i in MAX_RECURSION_DEPTH:
 		if not current or not current.sim_context: break
-		var p = current.sim_context.primary
+		var p = current.get_parent_binding()
 		if p == subject: return true
 		current = p
 	return false
@@ -36,7 +37,7 @@ static func _find_dominant_root(body: AbstractBinding, model: OrbitalModel) -> A
 		if candidate.mass <= body.mass: continue
 		
 		# Only check root objects (bodies with no primary)
-		var is_root = candidate.sim_context == null or candidate.sim_context.primary == null
+		var is_root = body.get_parent_binding() == null
 		if not is_root: continue
 		
 		# Newton's law simplified for scoring (M/r^2)
@@ -58,16 +59,18 @@ static func _dive_into_hierarchy(body: AbstractBinding, parent: AbstractBinding,
 		if other == body or other == parent or not other.produces_gravity: continue
 		if other.mass <= body.mass: continue
 		
-		var is_child_of_parent = (other.sim_context == null) or (other.sim_context.primary == parent)
+		var is_child_of_parent = other.get_parent_binding() == parent
 		if not is_child_of_parent: continue
+		print("found",other,"for",body)
 		
 		# Check if the subject is within this candidate's Sphere of Influence
-		var dist_to_other = body.sim_position.distance_to(other.sim_position)
+		var dist_to_other = body.get_global_position().distance_to(other.get_global_position())
 		var soi = compute_soi_radius(other, parent)
-		
+		print(dist_to_other , soi)
 		if dist_to_other < soi:
 			# If multiple children overlap, pick the most massive one (dominant influence)
 			if not best_child or other.mass > best_child.mass:
+				print("found_better",other,"for",body)
 				best_child = other
 
 	if best_child:
@@ -80,7 +83,7 @@ static func find_siblings(body: AbstractBinding, parent: AbstractBinding, model:
 	var siblings = []
 	for other in model.values():
 		if other == body or not other.produces_gravity: continue
-		var other_pri = other.sim_context.primary if other.sim_context else null
+		var other_pri = other.get_parent_binding()
 		if other_pri == parent:
 			siblings.append(other)
 	return siblings

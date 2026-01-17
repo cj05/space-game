@@ -17,7 +17,7 @@ func test_close_approach_convergence() -> void:
 	solver.propagate(epoch_time)
 	var p1 = solver.to_cartesian().r
 	
-	solver.propagate(0.00001) # A tiny micro-tick
+	solver.propagate(0.000001) # A tiny micro-tick
 	var p2 = solver.to_cartesian().r
 	
 	var displacement = p1.distance_to(p2)

@@ -24,11 +24,10 @@ func _setup_mock_body(name: String, mass: float, pos: Vector2, gravity: bool = t
 ## 1. The Root Case (The Sun)
 func test_sun_bootstrap_logic() -> void:
 	var model = OrbitalModel.new()
-	var builder = ContextBuilder.new()
 	var sun = _setup_mock_body("Sun", 1e6, Vector2.ZERO)
 	model.insert(sun)
 	
-	builder.build(model)
+	OrbitalHierachyResolver.initialize(model)
 	
 	assert_not_null(sun.sim_context, "Sun should have a context after build")
 	assert_null(sun.sim_context.primary, "The Sun (Root) primary must be null to avoid self-orbiting")
@@ -38,7 +37,6 @@ func test_sun_bootstrap_logic() -> void:
 func test_deep_automatic_parenting() -> void:
 	print("test_deep_automatic_parenting")
 	var model = OrbitalModel.new()
-	var builder = ContextBuilder.new()
 	
 	var sun = _setup_mock_body("Sun", 1e6, Vector2.ZERO)
 	var earth = _setup_mock_body("Earth", 1000, Vector2(10000, 0))
@@ -50,12 +48,7 @@ func test_deep_automatic_parenting() -> void:
 	model.insert(moon)
 	model.insert(ship)
 	
-	# Pass 1: Sun becomes Root, Earth finds Sun.
-	builder.build(model)
-	# Pass 2: Moon finds Earth (via Sun dive).
-	builder.build(model)
-	# Pass 3: Ship finds Moon (via Sun -> Earth dive).
-	builder.build(model)
+	OrbitalHierachyResolver.initialize(model)
 	
 	assert_eq(earth.sim_context.primary, sun, "Earth orbits Sun")
 	assert_eq(moon.sim_context.primary, earth, "Moon orbits Earth")
@@ -64,7 +57,6 @@ func test_deep_automatic_parenting() -> void:
 ## 3. Dynamic Escape (Leaving Moon for Earth)
 func test_dynamic_escape_transition() -> void:
 	var model = OrbitalModel.new()
-	var builder = ContextBuilder.new()
 	
 	var earth = _setup_mock_body("Earth", 1000, Vector2.ZERO)
 	var moon = _setup_mock_body("Moon", 10, Vector2(500, 0))
@@ -75,23 +67,21 @@ func test_dynamic_escape_transition() -> void:
 	model.insert(ship)
 	
 	# Initial Setup: Ship orbits Moon
-	builder.build(model) # Earth root
-	builder.build(model) # Moon finds Earth
-	builder.build(model) # Ship finds Moon
+	OrbitalHierachyResolver.initialize(model) # Earth root
+
 	assert_eq(ship.sim_context.primary, moon)
 	
 	# Teleport ship outside Moon's SOI but still near Earth
 	# Moon SOI relative to Earth is ~500 * (10/1000)^0.4 ≈ 79
 	ship.sim_position = Vector2(700, 0) 
 	
-	builder.build(model)
+	OrbitalHierachyResolver.initialize(model)
 	
 	assert_eq(ship.sim_context.primary, earth, "Ship should have escaped Moon and been caught by Earth")
 
 ## 4. Capture Prevention (Non-Gravity Bodies)
 func test_ship_cannot_capture_ship() -> void:
 	var model = OrbitalModel.new()
-	var builder = ContextBuilder.new()
 	
 	var sun = _setup_mock_body("Sun", 1e6, Vector2.ZERO)
 	var ship_a = _setup_mock_body("ShipA", 100, Vector2(1000, 0), false) # No gravity
@@ -101,15 +91,13 @@ func test_ship_cannot_capture_ship() -> void:
 	model.insert(ship_a)
 	model.insert(ship_b)
 	
-	builder.build(model)
-	builder.build(model)
+	OrbitalHierachyResolver.initialize(model)
 	
 	assert_eq(ship_b.sim_context.primary, sun, "ShipB should ignore ShipA even if closer, because A doesn't produce gravity")
 
 ## 5. Cycle Protection (The "A orbits B orbits A" crash)
 func test_cycle_crash_prevention() -> void:
 	var model = OrbitalModel.new()
-	var builder = ContextBuilder.new()
 	
 	var body_a = _setup_mock_body("BodyA", 1000, Vector2.ZERO)
 	var body_b = _setup_mock_body("BodyB", 1000, Vector2(100, 0))
@@ -118,7 +106,7 @@ func test_cycle_crash_prevention() -> void:
 	model.insert(body_b)
 	
 	# Force a bad state manually
-	builder.build(model)
+	OrbitalHierachyResolver.initialize(model)
 	body_a.sim_context.primary = body_b
 	body_b.sim_context.primary = body_a
 	

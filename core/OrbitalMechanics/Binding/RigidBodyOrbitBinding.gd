@@ -62,7 +62,7 @@ func get_global_velocity()->Vector2:
 
 func apply_immediate_impulse(impulse: Vector2):
 	var dt = get_physics_process_delta_time()
-	var parent = sim_context.primary
+	var parent = get_parent_binding()
 	var parent_pos = Vector2.ZERO
 	var parent_vel = Vector2.ZERO
 	if parent:
@@ -103,6 +103,8 @@ func calculate_orbital_energy(pos: Vector2, vel: Vector2, parent_pos:Vector2, pa
 	return kinetic + potential
 
 func get_soi_radius()->float:
-	if sim_context and sim_context.primary:
-		return OrbitalHierarchy.compute_soi_radius(self, sim_context.primary)
+	#print(get_parent_binding(),get_parent().name,self.name)
+	if get_parent_binding():
+		#print("HH")
+		return OrbitalHierarchy.compute_soi_radius(self, get_parent_binding())
 	return 0

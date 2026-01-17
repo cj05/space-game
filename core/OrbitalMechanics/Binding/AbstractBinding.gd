@@ -36,6 +36,8 @@ var sim_context: OrbitalContext
 var solver_dirty := true
 
 # --- temporary cache state ------------------------------------------------
+var last_parent: AbstractBinding
+
 var temp_rel_state2D: State2D
 
 enum VisitState { UNVISITED, VISITING, VISITED }
@@ -53,8 +55,10 @@ var pending_impulse: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	assert(get_body() != null, "AbstractBinding must be a child of Node")
-	_register()
 	init()
+
+func _enter_tree():
+	_register()
 
 func _exit_tree() -> void:
 	_unregister()
@@ -75,10 +79,12 @@ func collision_handle(state:PhysicsDirectBodyState2D) -> bool:
 func _register() -> void:
 	assert(OrbitalMechanics.registry != null)
 	OrbitalMechanics.registry.register_body(self)
+	print("regisrter")
 
 func _unregister() -> void:
 	assert(OrbitalMechanics.registry != null)
 	OrbitalMechanics.registry.unregister_body(self)
+	print("unregisrter :(")
 
 # --- state sync ------------------------------------------------------------
 
@@ -109,20 +115,29 @@ func get_mu() -> float:
 # --- drawer hooks ----------------------------------------------------------
 
 func sample(true_anomaly:float) -> Vector2: #
+	if not sim_solver: 
+		return Vector2.ZERO
 	var offset = Vector2.ZERO
-	if sim_context.primary:
-		offset += sim_context.primary.get_body().global_position
+	var parent = get_parent_binding()
+	if parent:
+		offset += parent.get_body().global_position
 	return sim_solver.sample_point_at(true_anomaly) + offset
 	
 func get_true_anomaly()->float:
-	sim_solver.compute_ta()
-	return sim_solver.get_true_anomaly()
+	if sim_solver:
+		sim_solver.compute_ta()
+		return sim_solver.get_true_anomaly()
+	return 0
 	
 func get_orbit_dir()->float:
-	return sim_solver.get_orbit_dir()
+	if sim_solver:
+		return sim_solver.get_orbit_dir()
+	return 0
 	
 func get_eccentricity()->float:
-	return sim_solver.get_eccentricity()
+	if sim_solver:
+		return sim_solver.get_eccentricity()
+	return 0
 func integrate_impulse(impulse:Vector2):
 	pass
 func integrate_uncatched_impulse():
@@ -139,3 +154,27 @@ func add_force(f: Vector2):
 	constant_forces += f
 func get_accumulated_acceleration() -> Vector2:
 	return constant_forces / mass if mass > 0 else Vector2.ZERO
+func get_parent_binding()->AbstractBinding:
+	return get_parent() as AbstractBinding
+	
+func assign_parent(parent:AbstractBinding):
+	print(parent)
+	reparent(parent)
+	
+func _on_initial_bind(parent: AbstractBinding) -> void:
+	# Hard bind, no exit logic
+	assign_parent(parent)
+	
+func _on_exit_soi(old_parent: AbstractBinding) -> void:
+	if old_parent:
+		sim_position += old_parent.sim_position
+		sim_velocity += old_parent.sim_velocity
+
+	sim_solver = null
+	sim_context = null
+	last_parent = old_parent
+
+func _on_enter_soi(new_parent: AbstractBinding) -> void:
+	if new_parent:
+		sim_position -= new_parent.sim_position
+		sim_velocity -= new_parent.sim_velocity

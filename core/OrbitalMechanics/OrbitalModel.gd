@@ -1,9 +1,9 @@
 class_name OrbitalModel
 
-var celestial_bodies: Dictionary = {}
+var celestial_bodies: Dictionary[Node,AbstractBinding] = {}
 
 # --- Cache variables ---
-var _cached_values: Array = []
+var _cached_values: Array[AbstractBinding] = []
 var _cache_dirty: bool = true
 
 func insert(object: AbstractBinding) -> void:
@@ -17,7 +17,7 @@ func delete(object: AbstractBinding) -> void:
 func get_by_node(node: Node) -> AbstractBinding:
 	return celestial_bodies.get(node)
 
-func values() -> Array:
+func values() -> Array[AbstractBinding]:
 	if _cache_dirty:
 		_update_cache()
 	return _cached_values
