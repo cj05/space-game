@@ -39,7 +39,7 @@ func propagate(dt: float) -> void:
 	"""
 	push_error("propagate() not implemented in subclass")
 
-func to_cartesian() -> State2D:
+func to_cartesian(target_t: float = -1.0) -> State2D:
 	"""Compute Cartesian Parameters [r,v]
 	Override in subclass.
 	"""

@@ -44,7 +44,7 @@ func propagate(dt: float) -> void:
 
 # --- Cartesian output --------------------------------------------------------
 
-func to_cartesian() -> State2D:
+func to_cartesian(target_t: float = -1.0) -> State2D:
 	return State2D.new(r, v)
 
 

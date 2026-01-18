@@ -64,7 +64,6 @@ func propagate(dt: float) -> void:
 			# Resetting chi slightly helps prevent pchi from carrying 
 			# error across the modulo jump
 			pchi = fmod(pchi, sqrt(alpha) * period)
-	#print(t)
 
 
 # --- Output ------------------------------------------------------------------
@@ -80,8 +79,10 @@ func solve_chi(target_t: float, chi_guess: float = -1.0) -> float:
 	# Use provided guess or calculate a fallback
 	var chi: float = chi_guess
 	if chi < 0:
-		chi = crude_pchi_guess(sqrt_mu,r0mag)
+		chi = crude_pchi_guess(sqrt_mu,r0mag,target_t)
+	var cnt = 0
 	for _i in range(MAX_ITERS):
+		cnt+=1
 		var z := alpha * chi * chi
 		var C := stumpff_C(z)
 		var S := stumpff_S(z)
@@ -98,7 +99,6 @@ func solve_chi(target_t: float, chi_guess: float = -1.0) -> float:
 		var delta := F / dF
 		chi -= delta
 		if abs(delta) < TOL: break
-		
 	return chi
 
 # 2. Converts a solved chi back into r and v vectors
@@ -121,10 +121,10 @@ func get_state_at_chi(chi: float, target_t: float) -> State2D:
 
 	return State2D.new(res_r, res_v)
 
-func crude_pchi_guess(sqrt_mu:float,r0mag:float):
-	var chi = sqrt_mu * abs(alpha) * t
+func crude_pchi_guess(sqrt_mu:float,r0mag:float,target_t:float):
+	var chi = sqrt_mu * abs(alpha) * target_t
 	if alpha == 0.0:
-		chi = sqrt_mu * t / r0mag 
+		chi = sqrt_mu * target_t / r0mag 
 	return chi
 
 # 3. Public wrapper (can be called with any future time)
@@ -248,7 +248,6 @@ func time_to_radius(target_r: float) -> float:
 		if abs(delta) < TOL:
 			break
 	
-	print(conv_count)
 	if is_nan(chi): return INF
 
 	# 3. Final Conversion to Time

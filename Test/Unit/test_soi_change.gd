@@ -8,203 +8,202 @@ const UniversalKeplerSolver = preload(
 	"res://core/OrbitalMechanics/Solver/Kepler/Universal/UniversalKeplerSolver.gd"
 )
 
-func test_solve_time_to_soi_straight_line_flyby() -> void:
-	var mu := 1e-6  # NOT zero
+func test_closest_approach_sun_centric_earth_flyby() -> void:
+	# --- REAL DATA ---
+	# Sun GM (km^3 / s^2)
+	var mu_sun := 1.32712440018e11
+	
+	# Earth heliocentric state (approx, J2000-like)
+	var earth_pos := Vector2(149_597_870.7, 0.0) # 1 AU (km)
+	var earth_vel := Vector2(0.0, 29.78)         # km/s
+	
+	var earth_solver := UniversalKeplerSolver.new(mu_sun)
+	earth_solver.from_cartesian(earth_pos, earth_vel)
 
-	var target_solver: UniversalKeplerSolver = autofree(
-		UniversalKeplerSolver.new(mu)
-	)
-	target_solver.from_cartesian(
-		Vector2(1.0, 0.0), # avoid singularity
-		Vector2.ZERO
-	)
-
-	var ship_solver: UniversalKeplerSolver = autofree(
-		UniversalKeplerSolver.new(mu)
-	)
-	ship_solver.from_cartesian(
-		Vector2(101.0, 0.0),
-		Vector2(-10.0, 0.0)
-	)
-
-	var soi_radius := 50.0
-	var t_start := 0.0
-	var expected_time := 5.0
+	# Spacecraft: slightly faster, inner orbit, trailing Earth
+	var ship_pos := Vector2(149_000_000.0, -5_000_000.0)
+	var ship_vel := Vector2(5.0, 32.0)
+	
+	var ship_solver := UniversalKeplerSolver.new(mu_sun)
+	ship_solver.from_cartesian(ship_pos, ship_vel)
 
 	var util := CloseApproachUtil.new()
-	autofree(util)
 
-	var t_soi := util.solve_time_to_soi(
+	# Search window: 60 days
+	var t_start := 0.0
+	var t_end := 60.0 * 86400.0
+
+	var t_ca := util.solve_time_of_closest_approach(
 		ship_solver,
-		target_solver,
-		soi_radius,
-		t_start
+		earth_solver,
+		t_start,
+		t_end
+	)
+
+	# --- BASIC SANITY ---
+	assert_true(t_ca > 0.0, "Closest approach should occur in the future")
+
+	# --- LOCAL MINIMUM TEST ---
+	var dt := 60.0 # 1 minute
+	
+	var d_before := ship_solver.to_cartesian(t_ca - dt).r.distance_to(
+		earth_solver.to_cartesian(t_ca - dt).r
+	)
+	
+	var d_at := ship_solver.to_cartesian(t_ca).r.distance_to(
+		earth_solver.to_cartesian(t_ca).r
+	)
+	
+	var d_after := ship_solver.to_cartesian(t_ca + dt).r.distance_to(
+		earth_solver.to_cartesian(t_ca + dt).r
 	)
 
 	assert_true(
-		abs(t_soi - expected_time) < 1e-3,
-		"Incorrect SOI entry time: got=%f expected≈%f"
-			% [t_soi, expected_time]
+		d_at < d_before,
+		"Distance before closest approach should be larger"
 	)
-
-func test_solve_time_to_soi_offset_flyby() -> void:
-	var mu := 1e-6
-
-	var target: UniversalKeplerSolver = autofree(UniversalKeplerSolver.new(mu))
-	target.from_cartesian(Vector2(1.0, 0.0), Vector2.ZERO)
-
-	var ship: UniversalKeplerSolver = autofree(UniversalKeplerSolver.new(mu))
-	ship.from_cartesian(
-		Vector2(-99.0, 30.0),
-		Vector2(10.0, 0.0)
-	)
-
-	var soi := 50.0
-
-	# Solve analytically:
-	# (x - 1)^2 + 30^2 = 50^2
-	# (x - 1)^2 = 1600
-	# x_entry = 1 - 40 = -39
-	# Δx = 60 → t = 6
-	var expected := 6.0
-
-	var util:CloseApproachUtil = autofree(CloseApproachUtil.new())
-	var t := util.solve_time_to_soi(ship, target, soi, 0.0)
-
-	assert_almost_eq(t, expected, 1e-3)
-
-func test_no_soi_intersection() -> void:
-	var mu := 1e-6
-
-	var target:UniversalKeplerSolver = autofree(UniversalKeplerSolver.new(mu))
-	target.from_cartesian(Vector2(1.0, 0.0), Vector2.ZERO)
-
-	var ship:UniversalKeplerSolver = autofree(UniversalKeplerSolver.new(mu))
-	ship.from_cartesian(
-		Vector2(-99.0, 60.0),
-		Vector2(1.0, 0.0)
-	)
-
-	var soi := 50.0
-
-	var util:CloseApproachUtil = autofree(CloseApproachUtil.new())
-	var t := util.solve_time_to_soi(ship, target, soi, 0.0)
 	
-	assert_true(is_nan(t) or t < 0.0, "SOI should never be entered at %f" % [t])
-	
-	target.propagate(t)
-	ship.propagate(t)
-	
-	var target_state:State2D = target.to_cartesian()
-	var ship_state:State2D = ship.to_cartesian()
-	
-	var distance = ship_state.r.distance_to(target_state.r)
-	
-	assert_true(distance > 50.0, "SOI distance not fulfilled %f %s %s" % [distance,ship_state.r,target_state.r])
-	
-
-func test_realistic_earth_flyby_scaled() -> void:
-	# Scaled Earth
-	var mu := 1.0
-	var soi := 10.0
-
-	var target:UniversalKeplerSolver = autofree(UniversalKeplerSolver.new(mu))
-	target.from_cartesian(Vector2(1.0, 0.0), Vector2.ZERO)
-
-	# Ship inbound at ~1.2 * escape-ish speed
-	var ship:UniversalKeplerSolver = autofree(UniversalKeplerSolver.new(mu))
-	ship.from_cartesian(
-		Vector2(31.0, 0.0),  # far outside SOI
-		Vector2(-2.0, 0.0)
-	)
-
-	# Δr = (31 − 1) − 10 = 20
-	# v ≈ 2 → t ≈ 10
-	var expected := 10.0
-
-	var util:CloseApproachUtil = autofree(CloseApproachUtil.new())
-	var t := util.solve_time_to_soi(ship, target, soi, 0.0)
-
-	assert_true(abs(t - expected) < 0.2)
-
-func test_realistic_lunar_capture_scaled() -> void:
-	var mu := 0.1
-	var soi := 5.0
-
-	var target :UniversalKeplerSolver= autofree(UniversalKeplerSolver.new(mu))
-	target.from_cartesian(Vector2(1.0, 0.0), Vector2.ZERO)
-
-	var ship :UniversalKeplerSolver= autofree(UniversalKeplerSolver.new(mu))
-	ship.from_cartesian(
-		Vector2(16.0, 0.0),
-		Vector2(-1.0, 0.0)
-	)
-
-	# Δr = (16 − 1) − 5 = 10
-	# v = 1 → t ≈ 10
-	var expected := 10.0
-
-	var util :CloseApproachUtil= autofree(CloseApproachUtil.new())
-	var t := util.solve_time_to_soi(ship, target, soi, 0.0)
-
-	assert_true(abs(t - expected) < 0.5)
-
-func test_solve_time_to_soi_does_not_mutate_solvers() -> void:
-	var mu := 1e-6
-
-	var target :UniversalKeplerSolver= autofree(UniversalKeplerSolver.new(mu))
-	target.from_cartesian(Vector2(1.0, 0.0), Vector2.ZERO)
-
-	var ship :UniversalKeplerSolver= autofree(UniversalKeplerSolver.new(mu))
-	ship.from_cartesian(
-		Vector2(101.0, 0.0),
-		Vector2(-10.0, 0.0)
-	)
-
-	# --- Snapshot solver state BEFORE ---
-	var ship_pchi_before := ship.pchi
-	var target_pchi_before := target.pchi
-
-	var ship_state_before := ship.to_cartesian()
-	var target_state_before := target.to_cartesian()
-
-	var util :CloseApproachUtil= autofree(CloseApproachUtil.new())
-
-	# --- Act ---
-	var t := util.solve_time_to_soi(
-		ship,
-		target,
-		50.0,
-		0.0
-	)
-
-	# --- Snapshot solver state AFTER ---
-	var ship_pchi_after := ship.pchi
-	var target_pchi_after := target.pchi
-
-	var ship_state_after := ship.to_cartesian()
-	var target_state_after := target.to_cartesian()
-
-	# --- Assertions ---------------------------------------------------------
-
-	assert_eq(
-		ship_pchi_after,
-		ship_pchi_before,
-		"Ship solver pchi was mutated by solve_time_to_soi()"
-	)
-
-	assert_eq(
-		target_pchi_after,
-		target_pchi_before,
-		"Target solver pchi was mutated by solve_time_to_soi()"
-	)
-
 	assert_true(
-		ship_state_after.r.is_equal_approx(ship_state_before.r),
-		"Ship state mutated by solve_time_to_soi()"
+		d_at < d_after,
+		"Distance after closest approach should be larger"
 	)
 
-	assert_true(
-		target_state_after.r.is_equal_approx(target_state_before.r),
-		"Target state mutated by solve_time_to_soi()"
+func test_closest_approach_prograde_catchup() -> void:
+	var mu_sun := 1.32712440018e11
+
+	var earth_pos := Vector2(149_597_870.7, 0.0)
+	var earth_vel := Vector2(0.0, 29.78)
+
+	var earth := UniversalKeplerSolver.new(mu_sun)
+	earth.from_cartesian(earth_pos, earth_vel)
+
+	var ship := UniversalKeplerSolver.new(mu_sun)
+	ship.from_cartesian(
+		Vector2(149_000_000.0, -5_000_000.0),
+		Vector2(5.0, 32.0)
 	)
+
+	var util := CloseApproachUtil.new()
+	var t_ca := util.solve_time_of_closest_approach(
+		ship, earth, 0.0, 60.0 * 86400.0
+	)
+
+	assert_true(t_ca > 0.0)
+
+	_assert_local_minimum(ship, earth, t_ca)
+
+func test_closest_approach_retrograde() -> void:
+	var mu_sun := 1.32712440018e11
+
+	var earth := UniversalKeplerSolver.new(mu_sun)
+	earth.from_cartesian(
+		Vector2(149_597_870.7, 0.0),
+		Vector2(0.0, 29.78)
+	)
+
+	var ship := UniversalKeplerSolver.new(mu_sun)
+	ship.from_cartesian(
+		Vector2(150_000_000.0, -10_000_000.0),
+		Vector2(0.0, -35.0) # retrograde
+	)
+
+	var util := CloseApproachUtil.new()
+	var t_ca := util.solve_time_of_closest_approach(
+		ship, earth, 0.0, 90.0 * 86400.0
+	)
+
+	assert_true(t_ca > 0.0)
+
+	_assert_local_minimum(ship, earth, t_ca)
+
+func test_closest_approach_near_coorbital() -> void:
+	var mu_sun := 1.32712440018e11
+
+	var earth := UniversalKeplerSolver.new(mu_sun)
+	earth.from_cartesian(
+		Vector2(149_597_870.7, 0.0),
+		Vector2(0.0, 29.78)
+	)
+
+	var ship := UniversalKeplerSolver.new(mu_sun)
+	ship.from_cartesian(
+		Vector2(149_597_870.7, -20_000.0),
+		Vector2(0.1, 29.75) # almost same orbit
+	)
+
+	var util := CloseApproachUtil.new()
+	var t_ca := util.solve_time_of_closest_approach(
+		ship, earth, 0.0, 120.0 * 86400.0
+	)
+
+	assert_true(t_ca > 0.0)
+
+	_assert_local_minimum(ship, earth, t_ca, 300.0)
+
+func test_closest_approach_hyperbolic_ship() -> void:
+	var mu_sun := 1.32712440018e11
+
+	var earth := UniversalKeplerSolver.new(mu_sun)
+	earth.from_cartesian(
+		Vector2(149_597_870.7, 0.0),
+		Vector2(0.0, 29.78)
+	)
+
+	var ship := UniversalKeplerSolver.new(mu_sun)
+	ship.from_cartesian(
+		Vector2(100_000_000.0, -50_000_000.0),
+		Vector2(20.0, 40.0) # hyperbolic excess
+	)
+
+	var util := CloseApproachUtil.new()
+	var t_ca := util.solve_time_of_closest_approach(
+		ship, earth, 0.0, 180.0 * 86400.0
+	)
+
+	assert_true(t_ca > 0.0)
+
+	_assert_local_minimum(ship, earth, t_ca)
+
+func test_closest_approach_monotonic_separation() -> void:
+	var mu_sun := 1.32712440018e11
+
+	var earth := UniversalKeplerSolver.new(mu_sun)
+	earth.from_cartesian(
+		Vector2(149_597_870.7, 0.0),
+		Vector2(0.0, 29.78)
+	)
+
+	var ship := UniversalKeplerSolver.new(mu_sun)
+	ship.from_cartesian(
+		Vector2(300_000_000.0, 0.0),
+		Vector2(0.0, 10.0) # moving away
+	)
+
+	var util := CloseApproachUtil.new()
+	var t_ca := util.solve_time_of_closest_approach(
+		ship, earth, 0.0, 60.0 * 86400.0
+	)
+
+	assert_true(t_ca >= 0.0)
+
+	# Still must be a local min inside the bracket
+	_assert_local_minimum(ship, earth, t_ca)
+
+func _assert_local_minimum(
+	ship: UniversalKeplerSolver,
+	target: UniversalKeplerSolver,
+	t_ca: float,
+	dt: float = 60.0
+) -> void:
+	var d_before := ship.to_cartesian(t_ca - dt).r.distance_to(
+		target.to_cartesian(t_ca - dt).r
+	)
+	var d_at := ship.to_cartesian(t_ca).r.distance_to(
+		target.to_cartesian(t_ca).r
+	)
+	var d_after := ship.to_cartesian(t_ca + dt).r.distance_to(
+		target.to_cartesian(t_ca + dt).r
+	)
+
+	assert_true(d_at <= d_before + 10, "Not a minimum (before) %f <= %f" % [d_at,d_before])
+	assert_true(d_at <= d_after + 10, "Not a minimum (after) %f <= %f" % [d_at,d_after])
