@@ -20,6 +20,7 @@ var _queue: Heap
 
 #signal pre_step(dt: float)
 #signal post_step(sim_time: float)
+signal detect_event(t0: float,t1: float,events:Array)
 signal integrate(dt: float)
 signal task_executed(sim_time: float)
 
@@ -63,6 +64,10 @@ func clear() -> void:
 # ------------------------------------------------------------
 
 func step(dt: float) -> void:
+	
+	detect_and_schedule_events(dt)
+	
+	
 	var target_time := sim_time + dt
 
 	while not _queue.is_empty():
@@ -86,6 +91,18 @@ func step(dt: float) -> void:
 	if remaining > 0.0:
 		sim_time += remaining
 		emit_signal("integrate", remaining)
+
+func detect_and_schedule_events(dt: float):
+	var t0 := sim_time
+	var t1 := sim_time + dt
+	
+	var events := []
+	#print("emittor1",detect_event.get_connections())
+	emit_signal("detect_event", t0, t1, events)
+	#print("emittor2",detect_event.get_connections())
+
+	for e in events:
+		schedule(e.t, e.fn)
 
 # ------------------------------------------------------------
 # Heap comparator

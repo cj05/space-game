@@ -5,6 +5,7 @@ var registry: OrbitalRegistry
 
 func _ready():
 	OrbitalHierachyResolver.initialize(model)
+	OrbitalEventRegister.register()
 	Scheduler.integrate.connect(_on_integrate)
 
 func _enter_tree():
