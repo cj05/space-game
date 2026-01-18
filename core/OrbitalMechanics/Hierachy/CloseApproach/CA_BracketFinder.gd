@@ -13,7 +13,7 @@ class Bracket:
 
 const RV_EPS := 1e-6
 const FLAT_COUNT_LIMIT := 50        # ~50 * dt of flatness
-const MAX_STEPS := 10_000
+const MAX_STEPS := 100_000
 const MAX_BRACKETS := 1_000
 
 const DEBUG := true   # <<< turn off when stable

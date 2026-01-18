@@ -86,6 +86,7 @@ func test_multiple_minima_near_coorbital():
 
 	assert_gt(minima.size(), 1)
 	_assert_sorted(minima)
+	print(minima)
 
 
 func _assert_sorted(arr: Array) -> void:
