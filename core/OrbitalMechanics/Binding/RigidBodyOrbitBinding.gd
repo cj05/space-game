@@ -108,3 +108,37 @@ func get_soi_radius()->float:
 		#print("HH")
 		return OrbitalHierarchy.compute_soi_radius(self, get_parent_binding())
 	return 0
+
+func period() -> float:
+	var parent = get_parent_binding()
+	if parent == null:
+		return INF
+	
+	var mu := sim_context.mu
+	if mu <= 0.0:
+		return INF
+	
+	# Relative state
+	var r_vec := sim_position - parent.get_global_position()
+	var v_vec :Vector2 = sim_velocity - parent.get_global_velocity()
+	
+	var r := r_vec.length()
+	if r <= 0.0:
+		return INF
+	
+	var v2 := v_vec.length_squared()
+	
+	# Specific orbital energy
+	var energy := 0.5 * v2 - mu / r
+	
+	# Unbound orbit (parabolic or hyperbolic)
+	if energy >= 0.0:
+		return INF
+	
+	# Semi-major axis
+	var a := -mu / (2.0 * energy)
+	if a <= 0.0:
+		return INF
+	
+	# Kepler period
+	return TAU * sqrt(a * a * a / mu)

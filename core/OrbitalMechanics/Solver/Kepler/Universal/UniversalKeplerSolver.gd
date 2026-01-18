@@ -180,6 +180,17 @@ func compute_params() -> void:
 	var h = r.x * v.y - r.y * v.x
 	orbit_direction = sign(h)
 
+func period() -> float:
+	# Only defined for bound (elliptical) orbits
+	if alpha <= 0.0:
+		return INF
+
+	# alpha = 1 / a
+	# T = 2π * sqrt(a^3 / μ)
+	#   = 2π / (sqrt(mu) * alpha^(3/2))
+	return TAU / (sqrt(mu) * pow(alpha, 1.5))
+
+
 # --- Every Render (After Solver updates r) ---
 func compute_ta() -> void:
 	if not periapsis_angle:

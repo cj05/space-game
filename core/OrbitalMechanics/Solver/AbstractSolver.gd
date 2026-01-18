@@ -52,6 +52,9 @@ func energy() -> float:
 	# Specific orbital energy ε
 	push_error("energy() not implemented in subclass")
 	return 0.0
+	
+func period() -> float:
+	return INF
 
 func angular_momentum() -> float:
 	# |r × v| (2D)
