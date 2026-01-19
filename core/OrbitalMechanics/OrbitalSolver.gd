@@ -125,9 +125,6 @@ func _solve_snapshot_orbit(s: SimulationSnapshot, body:AbstractBinding, dt: floa
 		s.rel_v = state.v
 	
 	# --- DEBUG PRINTS ---
-	if(body.name == "Intercept"):
-		print(start_rel_r,start_rel_v,s.rel_r,s.rel_v,state.r)
-	
 	if is_ghost:
 		var dist = start_rel_r.distance_to(s.rel_r)
 		#print("[Ghost Solve] %s | Moved: %.4f | Snapshot Rel_R: %s" % [s.body.name, dist, s.rel_r])
