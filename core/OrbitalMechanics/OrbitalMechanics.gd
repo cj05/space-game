@@ -7,6 +7,7 @@ func _ready():
 	OrbitalHierachyResolver.initialize(model)
 	OrbitalEventRegister.register()
 	Scheduler.integrate.connect(_on_integrate)
+	Scheduler.post_step.connect(_after_step)
 
 func _enter_tree():
 	model = OrbitalModel.new()
@@ -17,3 +18,6 @@ func _enter_tree():
 
 func _on_integrate(delta:float, is_ghost:bool, snapshots: Dictionary):
 	solver.step_all(delta, is_ghost, snapshots)
+
+func _after_step(t:float):
+	solver.reset_forces()

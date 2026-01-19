@@ -94,3 +94,23 @@ func _swap(i: int, j: int) -> void:
 func _default_less(a, b) -> bool:
 	# Min-heap using built-in comparison
 	return a < b
+
+
+## Removes all items that do NOT satisfy the predicate
+## Usage: heap.filter(func(task): return task.body != invalid_body)
+func filter(predicate: Callable) -> void:
+	var new_data = []
+	for item in _data:
+		if predicate.call(item):
+			new_data.append(item)
+	
+	_data = new_data
+	_rebuild_heap()
+
+## Bottom-up heap construction (Floyd's algorithm)
+## Efficiently restores heap property in O(n) time
+func _rebuild_heap() -> void:
+	var n = _data.size()
+	# Start from the last non-leaf node and sift down
+	for i in range((n >> 1) - 1, -1, -1):
+		_sift_down(i)

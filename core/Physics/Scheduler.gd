@@ -1,134 +1,76 @@
+## Scheduler.gd
 extends Node
 
-## ---- Configuration ----
 @export var enabled := true
 @export var time_scale := 1.0
 
-## ---- Internal state ----
+signal detect_event(t0: float, t1: float, last_snapshots: Dictionary, events: Array)
+signal integrate(dt: float, is_ghost: bool, snapshots: Dictionary)
+signal post_step(t:float)
+
+enum EventResult { CONTINUE, REQUEUE }
+
 var sim_time := 0.0
+var current_frame_dt := 0.0 # Added: Ruler for the current step
 var _counter := 0
-
 var _queue: Heap
-
-## ---- Task structure ----
-# {
-#   time: float,
-#   order: int,
-#   fn: Callable
-# }
-
-
-#signal pre_step(dt: float)
-#signal post_step(sim_time: float)
-signal detect_event(t0: float,t1: float,events:Array)
-signal integrate(dt: float, is_ghost:bool,snapshots:Dictionary)
-signal task_executed(sim_time: float)
-
-
-# ------------------------------------------------------------
-# Lifecycle
-# ------------------------------------------------------------
-
-func _ready():
-	_queue = Heap.new(_task_less)
+var _last_valid_snapshots: Dictionary = {}
 
 func _physics_process(delta: float):
-	if not enabled:
-		return
-
+	if not enabled: return
 	step(delta * time_scale)
+	emit_signal("post_step",sim_time)
 
-# ------------------------------------------------------------
-# Public API
-# ------------------------------------------------------------
+func _ready():
+	_queue = Heap.new(func(a, b): 
+		if a.time == b.time: return a.order < b.order
+		return a.time < b.time
+	)
 
-func schedule_offset(execution_time: float, at_time: float, fn: Callable, ghost: bool = false) -> void:
+func next_order() -> int: # Added: Helper for event priority
 	_counter += 1
-	_queue.push({
-		"exec_t": execution_time,
-		"time": at_time,
-		"order": _counter,
-		"fn": fn,
-		"ghost": ghost
-	})
+	return _counter
 
-func schedule(at_time: float, fn: Callable, ghost: bool = false) -> void:
-	schedule_offset(at_time,at_time,fn,ghost)
+func schedule_task(task: ScheduledTask):
+	_queue.push(task)
 
-func schedule_in(delay: float, fn: Callable) -> void:
-	schedule(sim_time + delay, fn)
+func step(delta: float) -> void:
+	current_frame_dt = delta # Set the ruler at start of step
+	var target_time := sim_time + delta
 	
-func schedule_instant(fn: Callable) -> void:
-	schedule(0,fn)
-
-func clear() -> void:
-	_queue.clear()
-
-# ------------------------------------------------------------
-# Core stepping logic
-# ------------------------------------------------------------
-
-func step(dt: float) -> void:
-	
-	detect_and_schedule_events(dt)
-	
-	
-	var target_time := sim_time + dt
+	_scan_for_events(sim_time, target_time)
 
 	while not _queue.is_empty():
-		var task = _queue.peek()
+		var task: ScheduledTask = _queue.peek()
+		if task.time > target_time: break
 		
-		var ghost = task.ghost
-		if(task.exec_t != task.time):
-			ghost = true
-		if task.time > target_time:
-			break
-		var sim_snapshots = {} # This dictionary is passed by reference
-		var sub_dt: float = task.time - sim_time
-		var integrate_dt: float = sub_dt
-		if(task.exec_t != task.time):
-			integrate_dt = task.exec_t - sim_time
+		_queue.pop()
 		
-		print(sub_dt)
-		if sub_dt > 0.0:
-			if not ghost:
-				sim_time += sub_dt
-			print(sub_dt,integrate_dt,ghost)
-			# Pass the dictionary as an argument
-			emit_signal("integrate", integrate_dt, ghost, sim_snapshots) 
-			
-			# This will now contain data IF the solver filled it
-			#print("K",sim_snapshots)
-		task = _queue.pop()
+		var sample_point = task.exec_t if task.ghost else task.time
+		var integrate_dt = sample_point - sim_time
+		var state = SimulationState.new(sample_point)
+		
+		if integrate_dt > 0.0:
+			emit_signal("integrate", integrate_dt, task.ghost, state.snapshots)
+			if not task.ghost:
+				sim_time = task.time
+				_last_valid_snapshots = state.snapshots
 
-		if task.fn.is_valid():
-			task.fn.call(sim_snapshots)
-
-		emit_signal("task_executed", sim_time)
+		var result = task.fn.call(state) # Pass the full state object
 		
-	var remaining := target_time - sim_time
+		if result == EventResult.REQUEUE: # Cleaned up local enum access
+			_queue.filter(func(t): return t.body != task.body)
+			if target_time - sim_time > 0.0001:
+				_scan_for_events(sim_time, target_time)
+
+	var remaining = target_time - sim_time
 	if remaining > 0.0:
-		sim_time += remaining
-		emit_signal("integrate", remaining, false, {})
+		emit_signal("integrate", remaining, false, _last_valid_snapshots)
+		sim_time = target_time
 
-func detect_and_schedule_events(dt: float):
-	var t0 := sim_time
-	var t1 := sim_time + dt
-	
-	var events := []
-	#print("emittor1",detect_event.get_connections())
-	emit_signal("detect_event", t0, t1, events)
-	#print("emittor2",detect_event.get_connections())
-	
-	
+func _scan_for_events(t0: float, t1: float):
+	var events = []
+	emit_signal("detect_event", t0, t1, _last_valid_snapshots, events)
 	for e in events:
-		schedule_offset(e.sample_t, e.t, e.fn, e.ghost)
-
-# ------------------------------------------------------------
-# Heap comparator
-# ------------------------------------------------------------
-
-func _task_less(a, b) -> bool:
-	if a.time == b.time:
-		return a.order < b.order
-	return a.time < b.time
+		var task = ScheduledTask.new(e.sample_t, e.t, next_order(), e.fn, e.ghost, e.get("body"))
+		_queue.push(task)

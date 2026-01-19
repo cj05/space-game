@@ -53,7 +53,7 @@ func step_all(delta: float, is_ghost: bool, snapshots: Dictionary) -> Dictionary
 	
 	# PHASE 3: DRIFT
 	for body in bodies:
-		_solve_snapshot_orbit(snapshots[body], delta, is_ghost)
+		_solve_snapshot_orbit(snapshots[body], body, delta, is_ghost)
 	
 	# PHASE 4: KICK
 	_apply_kick_to_snapshots(snapshots, delta * 0.5, false, is_ghost)
@@ -76,6 +76,7 @@ func _apply_kick_to_snapshots(snapshots: Dictionary, dt_factor: float, first_kic
 		var impulse = Vector2.ZERO
 		if first_kick and body.pending_impulse != Vector2.ZERO:
 			impulse = body.pending_impulse / body.mass
+			body.pending_impulse = Vector2.ZERO
 		
 		# Change velocity
 		s.rel_v += (accel * dt_factor) + impulse
@@ -84,19 +85,27 @@ func _apply_kick_to_snapshots(snapshots: Dictionary, dt_factor: float, first_kic
 		if accel != Vector2.ZERO or impulse != Vector2.ZERO:
 			s.is_dirty = true
 
-func _solve_snapshot_orbit(s: SimulationSnapshot, dt: float, is_ghost: bool):
+func _solve_snapshot_orbit(s: SimulationSnapshot, body:AbstractBinding, dt: float, is_ghost: bool):
 	var solver = s.solver
 	var start_rel_r = s.rel_r # For Debug
+	var start_rel_v = s.rel_v # For Debug
+	
+	
 	
 	# 1. Sync Mu
 	if not solver.set_mu(s.mu):
-		# Fallback if solver fails or Mu is zero
-		s.rel_r += s.rel_v * dt
-		return
+		solver = create_solver(body)
+		s.solver = solver
+		print("Recreat")
+		if not solver.set_mu(s.mu):
+			# Fallback if solver fails or Mu is zero
+			s.rel_r += s.rel_v * dt
+			print("SimSolver: MU failure")
+			return
 
 	# 2. Solver Sync (Perturbations)
 	if s.is_dirty:
-		solver.from_cartesian(s.r_primary, s.v_primary)
+		solver.from_cartesian(s.rel_r, s.rel_v)
 		# s.is_dirty is cleared after we are sure we won't need it again this step
 	
 	# 3. Propagate
@@ -109,16 +118,19 @@ func _solve_snapshot_orbit(s: SimulationSnapshot, dt: float, is_ghost: bool):
 	
 	# 4. Apply result with NaN safety
 	if is_vec2_nan(state.r) or is_vec2_nan(state.v):
-		push_warning("Orbit Solver NaN for %s, falling back to Euler" % s.body.name)
+		push_warning("Orbit Solver NaN for %s, falling back to Euler %s %s" % [s.body.name,start_rel_r,start_rel_v])
 		s.rel_r += s.rel_v * dt
 	else:
 		s.rel_r = state.r
 		s.rel_v = state.v
 	
 	# --- DEBUG PRINTS ---
+	if(body.name == "Intercept"):
+		print(start_rel_r,start_rel_v,s.rel_r,s.rel_v,state.r)
+	
 	if is_ghost:
 		var dist = start_rel_r.distance_to(s.rel_r)
-		print("[Ghost Solve] %s | Moved: %.4f | Snapshot Rel_R: %s" % [s.body.name, dist, s.rel_r])
+		#print("[Ghost Solve] %s | Moved: %.4f | Snapshot Rel_R: %s" % [s.body.name, dist, s.rel_r])
 		if s.body.sim_position != s.body_start_sim_pos:
 			push_error("[CRITICAL] Ghost step mutated real body: %s" % s.body.name)
 
@@ -154,18 +166,20 @@ func _reintegrate_snapshots(snapshots: Dictionary) -> void:
 	for body in snapshots.keys():
 		var s: SimulationSnapshot = snapshots[body]
 		
+		# USE RELATIVE, NOT GLOBAL
 		body.sim_position = s.global_r
 		body.sim_velocity = s.global_v
-		body.constant_forces = Vector2.ZERO
-		body.pending_impulse = Vector2.ZERO
-		body.last_parent = body.get_parent_binding()
 		
+		# Ensure the solver knows exactly what its primary was doing
 		if body.sim_context:
 			body.sim_context.mu = s.mu
 			body.sim_context.r_primary = s.r_primary
 			body.sim_context.v_primary = s.v_primary
-		
-		body.solver_dirty = s.is_dirty
-
+	
 func is_vec2_nan(v: Vector2) -> bool:
 	return is_nan(v.x) or is_nan(v.y)
+
+func reset_forces():
+	var bodies = model.values()
+	for body in bodies:
+		body.constant_forces = Vector2.ZERO

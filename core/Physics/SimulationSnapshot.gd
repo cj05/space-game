@@ -45,11 +45,12 @@ func prepare_context(snapshots: Dictionary) -> void:
 	
 	if parent:
 		self.mu = parent.get_mu()
+		#print(mu," ",solver.mu)
 		# Relative context calculation
 		# We use the LIVE body positions to ensure the relative anchor is clean
-		self.r_primary = body.sim_position - parent.sim_position
+		self.rel_r = body.sim_position - parent.sim_position
 		# v_primary uses the snapshot's rel_v because it was modified by Phase 1 Kick
-		self.v_primary = self.rel_v - parent.sim_velocity
+		self.rel_v = self.rel_v - parent.sim_velocity
 	else:
 		self.mu = 0.0
 		self.r_primary = Vector2.ZERO

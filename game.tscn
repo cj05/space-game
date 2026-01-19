@@ -19,8 +19,8 @@ offset_bottom = 23.0
 text = "sun"
 
 [node name="Intercept" parent="." instance=ExtResource("4_fc0e3")]
-position = Vector2(1000, -150)
-linear_velocity = Vector2(0, 20)
+position = Vector2(1000, -210)
+linear_velocity = Vector2(0, 25)
 
 [node name="Camera2D" type="Camera2D" parent="Intercept"]
 

@@ -148,6 +148,8 @@ func apply_immediate_impulse(impulse: Vector2):
 	pass
 func get_global_position()->Vector2:
 	return Vector2.ZERO
+func get_global_velocity()->Vector2:
+	return Vector2.ZERO
 func get_soi_radius()->float:
 	return 0
 func add_force(f: Vector2):
@@ -156,7 +158,17 @@ func get_accumulated_acceleration() -> Vector2:
 	return constant_forces / mass if mass > 0 else Vector2.ZERO
 func get_parent_binding()->AbstractBinding:
 	return get_parent() as AbstractBinding
+func get_sibling_sois() -> Array:
+	var parent = get_parent()
+	if not parent: return []
 	
+	var siblings = []
+	for child in parent.get_children():
+		var binding = child as AbstractBinding
+		if binding and binding != self and binding.produces_gravity:
+			siblings.append(child)
+	return siblings
+
 func assign_parent(parent:AbstractBinding):
 	if self.get_parent() == null:
 		parent.add_child(self)
@@ -169,8 +181,7 @@ func _on_initial_bind(parent: AbstractBinding) -> void:
 	
 func _on_exit_soi(old_parent: AbstractBinding) -> void:
 	if old_parent:
-		sim_position += old_parent.sim_position
-		sim_velocity += old_parent.sim_velocity
+		pass
 
 	sim_solver = null
 	sim_context = null
@@ -178,5 +189,16 @@ func _on_exit_soi(old_parent: AbstractBinding) -> void:
 
 func _on_enter_soi(new_parent: AbstractBinding) -> void:
 	if new_parent:
-		sim_position -= new_parent.sim_position
-		sim_velocity -= new_parent.sim_velocity
+		pass
+
+## Inside AbstractBinding.gd or similar
+func perform_soi_transition(new_parent: AbstractBinding) -> void:
+	var old_parent = get_parent_binding()
+	# --- DO THE TRANSITION ---
+	_on_exit_soi(old_parent)
+	assign_parent(new_parent)
+	_on_enter_soi(new_parent)
+	
+	# -------------------------
+	
+	
