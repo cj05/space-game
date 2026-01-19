@@ -19,11 +19,16 @@ func _on_detect_event(d0: float, d1: float, _last_snapshots: Dictionary, events:
 func probe_for_exit(state: SimulationState):
 	var snaps = state.snapshots
 	for body in snaps.keys():
-		# NEVER exit if you are a major celestial body
 		if body.role <= OrbitalRole.Type.MOON: continue 
 		
 		var parent = body.get_parent_binding()
 		if not parent or not snaps.has(parent): continue
+		
+		# --- ADD THIS GUARD ---
+		# If the parent is the STAR (Root), don't allow "Exit" 
+		# unless you actually have an Interstellar system.
+		if parent.role == OrbitalRole.Type.STAR: continue
+		# ----------------------
 		
 		var s_body = snaps[body]
 		var s_parent = snaps[parent]
