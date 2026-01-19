@@ -118,7 +118,7 @@ func _solve_snapshot_orbit(s: SimulationSnapshot, body:AbstractBinding, dt: floa
 	
 	# 4. Apply result with NaN safety
 	if is_vec2_nan(state.r) or is_vec2_nan(state.v):
-		push_warning("Orbit Solver NaN for %s, falling back to Euler %s %s" % [s.body.name,start_rel_r,start_rel_v])
+		#push_warning("Orbit Solver NaN for %s, falling back to Euler %s %s" % [s.body.name,start_rel_r,start_rel_v])
 		s.rel_r += s.rel_v * dt
 	else:
 		s.rel_r = state.r
