@@ -42,14 +42,18 @@ func _physics_process(delta: float):
 # Public API
 # ------------------------------------------------------------
 
-func schedule(at_time: float, fn: Callable, ghost: bool = false) -> void:
+func schedule_offset(execution_time: float, at_time: float, fn: Callable, ghost: bool = false) -> void:
 	_counter += 1
 	_queue.push({
+		"exec_t": execution_time,
 		"time": at_time,
 		"order": _counter,
 		"fn": fn,
 		"ghost": ghost
 	})
+
+func schedule(at_time: float, fn: Callable, ghost: bool = false) -> void:
+	schedule_offset(at_time,at_time,fn,ghost)
 
 func schedule_in(delay: float, fn: Callable) -> void:
 	schedule(sim_time + delay, fn)
@@ -73,17 +77,25 @@ func step(dt: float) -> void:
 
 	while not _queue.is_empty():
 		var task = _queue.peek()
+		
 		var ghost = task.ghost
+		if(task.exec_t != task.time):
+			ghost = true
 		if task.time > target_time:
 			break
 		var sim_snapshots = {} # This dictionary is passed by reference
 		var sub_dt: float = task.time - sim_time
+		var integrate_dt: float = sub_dt
+		if(task.exec_t != task.time):
+			integrate_dt = task.exec_t - sim_time
 		
 		print(sub_dt)
 		if sub_dt > 0.0:
-			sim_time += sub_dt
+			if not ghost:
+				sim_time += sub_dt
+			print(sub_dt,integrate_dt,ghost)
 			# Pass the dictionary as an argument
-			emit_signal("integrate", sub_dt, ghost, sim_snapshots) 
+			emit_signal("integrate", integrate_dt, ghost, sim_snapshots) 
 			
 			# This will now contain data IF the solver filled it
 			#print("K",sim_snapshots)
@@ -110,7 +122,7 @@ func detect_and_schedule_events(dt: float):
 	
 	
 	for e in events:
-		schedule(e.t, e.fn, e.ghost)
+		schedule_offset(e.sample_t, e.t, e.fn, e.ghost)
 
 # ------------------------------------------------------------
 # Heap comparator
