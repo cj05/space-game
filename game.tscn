@@ -17,12 +17,11 @@ offset_right = 40.0
 offset_bottom = 23.0
 text = "sun"
 
-[node name="Camera2D" type="Camera2D" parent="Sol"]
-zoom = Vector2(0.2, 0.2)
-
 [node name="Intercept" parent="." instance=ExtResource("4_fc0e3")]
 position = Vector2(1000, -150)
 linear_velocity = Vector2(0, 20)
+
+[node name="Camera2D" type="Camera2D" parent="Intercept"]
 
 [node name="Earth" parent="." node_paths=PackedStringArray("fixed_primary_node") instance=ExtResource("3_feb5d")]
 position = Vector2(1000, 0)

@@ -63,24 +63,27 @@ func get_global_velocity()->Vector2:
 func apply_immediate_impulse(impulse: Vector2):
 	var dt = get_physics_process_delta_time()
 	var parent = get_parent_binding()
+	
+	# 1. Safely get MU
+	var mu = 0.0
 	var parent_pos = Vector2.ZERO
 	var parent_vel = Vector2.ZERO
+	
 	if parent:
 		parent_pos = parent.get_global_position()
 		parent_vel = parent.get_global_velocity()
+		mu = parent.get_mu() # Pull mu directly from parent
 	
-	print(calculate_orbital_energy(sim_position,sim_velocity,parent_pos,parent_vel,sim_context.mu))
-	
+	# 2. Sync state from physics engine
 	sim_velocity = get_global_velocity()
+	sim_position = get_global_position()
 	
-	var actual_pos = get_global_position()
+	# 3. Print with safety check
+	if mu > 0:
+		print("Energy: ", calculate_orbital_energy(sim_position, sim_velocity, parent_pos, parent_vel, mu))
 	
-	sim_position = actual_pos
-	print(calculate_orbital_energy(sim_position,sim_velocity,parent_pos,parent_vel,sim_context.mu))
-	
+	# 4. Trigger the solver re-anchor
 	solver_dirty = true
-	
-	
 
 
 func calculate_orbital_energy(pos: Vector2, vel: Vector2, parent_pos:Vector2, parent_vel:Vector2, mu: float) -> float:

@@ -15,5 +15,5 @@ func _enter_tree():
 	registry.set_model(model)
 	solver.set_model(model)
 
-func _on_integrate(delta:float):
-	solver.step_all(delta)
+func _on_integrate(delta:float, is_ghost:bool):
+	solver.step_all(delta, is_ghost)

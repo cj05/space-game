@@ -128,18 +128,27 @@ func crude_pchi_guess(sqrt_mu:float,r0mag:float,target_t:float):
 	return chi
 
 # 3. Public wrapper (can be called with any future time)
-func to_cartesian(target_t: float = -1.0) -> State2D:
-	var solve_t = t if target_t < 0 else target_t
-	# Use pchi as a "warm start" if we are solving for a time near our current one
-	var guess = pchi if abs(solve_t - last_t) < 1.0 else -1
+func to_cartesian(target_t: float = INF) -> State2D:
+	# Determine if we are mutating or just predicting
+	var is_querying := (target_t != INF)
+	var solve_t = target_t if is_querying else t
+	
+	# Warm start: use pchi if we are near the last solved time
+	var guess = pchi if abs(solve_t - last_t) < 1.0 else -1.0
 	
 	var chi = solve_chi(solve_t, guess)
+	var state = get_state_at_chi(chi, solve_t)
 	
-	# If this is our current evaluation, update the persistent pchi
-	if target_t < 0: pchi = chi 
+	# ONLY mutate if this is NOT a prediction query
+	if not is_querying:
+		r = state.r
+		v = state.v
+		pchi = chi
+		# Refresh derived orientation/anomaly for rendering
+		compute_params()
+		compute_ta()
 	
-	return get_state_at_chi(chi, solve_t)
-
+	return state
 # --- Utilities ---------------------------------------------------------------
 func radius() -> float:
 	return r.length()

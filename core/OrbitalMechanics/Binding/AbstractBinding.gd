@@ -158,8 +158,6 @@ func get_parent_binding()->AbstractBinding:
 	return get_parent() as AbstractBinding
 	
 func assign_parent(parent:AbstractBinding):
-	print(parent)
-	
 	if self.get_parent() == null:
 		parent.add_child(self)
 	else:

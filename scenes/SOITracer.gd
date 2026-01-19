@@ -15,7 +15,6 @@ func _process(_delta):
 
 func draw_soi():
 	var r := tracking_node.get_soi_radius()
-	print(r)
 	clear_points()
 
 	for i in range(segments + 1):

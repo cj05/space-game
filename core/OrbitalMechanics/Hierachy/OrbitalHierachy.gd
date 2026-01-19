@@ -66,7 +66,7 @@ static func _dive_into_hierarchy(body: AbstractBinding, parent: AbstractBinding,
 		# Check if the subject is within this candidate's Sphere of Influence
 		var dist_to_other = body.get_global_position().distance_to(other.get_global_position())
 		var soi = compute_soi_radius(other, parent)
-		print(dist_to_other , soi)
+		#print(dist_to_other , soi)
 		if dist_to_other < soi:
 			# If multiple children overlap, pick the most massive one (dominant influence)
 			if not best_child or other.mass > best_child.mass:

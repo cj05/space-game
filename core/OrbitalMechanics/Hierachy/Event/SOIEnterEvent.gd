@@ -10,6 +10,6 @@ func _on_detect_event(d0: float,d1: float,events: Array):
 	#print("oi")
 	
 func on_soi_enter():
-	print("hi")
+	#print("hi")
 	pass
 	

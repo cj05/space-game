@@ -21,7 +21,7 @@ var _queue: Heap
 #signal pre_step(dt: float)
 #signal post_step(sim_time: float)
 signal detect_event(t0: float,t1: float,events:Array)
-signal integrate(dt: float)
+signal integrate(dt: float, is_ghost:bool)
 signal task_executed(sim_time: float)
 
 
@@ -42,12 +42,13 @@ func _physics_process(delta: float):
 # Public API
 # ------------------------------------------------------------
 
-func schedule(at_time: float, fn: Callable) -> void:
+func schedule(at_time: float, fn: Callable, ghost: bool = false) -> void:
 	_counter += 1
 	_queue.push({
 		"time": at_time,
 		"order": _counter,
-		"fn": fn
+		"fn": fn,
+		"ghost": ghost
 	})
 
 func schedule_in(delay: float, fn: Callable) -> void:
@@ -72,13 +73,14 @@ func step(dt: float) -> void:
 
 	while not _queue.is_empty():
 		var task = _queue.peek()
+		var ghost = task.ghost
 		if task.time > sim_time:
 			break
 		
 		var sub_dt:float = task.time - sim_time
 		if sub_dt > 0.0:
 			sim_time += sub_dt
-			emit_signal("integrate", sub_dt)
+			emit_signal("integrate", sub_dt, ghost)
 		
 		task = _queue.pop()
 
@@ -90,7 +92,7 @@ func step(dt: float) -> void:
 	var remaining := target_time - sim_time
 	if remaining > 0.0:
 		sim_time += remaining
-		emit_signal("integrate", remaining)
+		emit_signal("integrate", remaining, false)
 
 func detect_and_schedule_events(dt: float):
 	var t0 := sim_time

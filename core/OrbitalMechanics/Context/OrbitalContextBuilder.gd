@@ -1,41 +1,36 @@
 class_name OrbitalContextBuilder
 
-func build_model(model: OrbitalModel) -> void:
-	for body:AbstractBinding in model.values():
-		var current_pri = body.get_parent_binding()
-		var last_pri = body.last_parent
+# Purely populates snapshots without touching AbstractBinding sim_context
+func build_snapshot_context(model: OrbitalModel, snapshots: Dictionary) -> void:
+	for body in model.values():
+		var s: SimulationSnapshot = snapshots[body]
+		var parent = body.get_parent_binding()
 		
-		# Only rebuild if the hierarchy actually changed
-		if body.sim_context == null or last_pri != current_pri:
-			body.sim_context = _create_context(body, model)
-			body.solver_dirty = true
+		# 1. Update Mu and Solver Parameters
+		if parent:
+			s.mu = parent.get_mu()
+			# If you still use escape_radius logic:
+			var gp = parent.get_parent_binding()
+			# Note: s.escape_radius would need to be added to SimulationSnapshot class
+			s.escape_radius = OrbitalHierarchy.compute_soi_radius(parent, gp) if gp else INF
 		else:
-			_update_relative_state(body, body.sim_context)
+			s.mu = 0.0 
+			s.escape_radius = INF
+			
+		# 2. Update Primary Context (Relative r and v)
+		# We calculate this from the snapshot's current relative state 
+		# (which has been modified by Phase 1 Kick)
+		_fill_relative_context(s, snapshots)
 
-func _create_context(body, model) -> OrbitalContext:
-	# Prevent cycles
-
-	var ctx = OrbitalContext.new()
-	ctx.subject = body
-	#body.assign_parent(parent)
+func _fill_relative_context(s: SimulationSnapshot, snapshots: Dictionary) -> void:
+	var parent = s.body.get_parent_binding()
 	
-	var parent = body.get_parent_binding()
-	
-	if parent:
-		ctx.mu = parent.get_mu()
-		var gp = parent.get_parent_binding() 
-		ctx.escape_radius = OrbitalHierarchy.compute_soi_radius(parent, gp) if gp else INF
+	if parent and snapshots.has(parent):
+		var ps: SimulationSnapshot = snapshots[parent]
+		# The solver expects r_primary to be the vector FROM parent TO body
+		s.r_primary = s.rel_r - ps.rel_r
+		s.v_primary = s.rel_v - ps.rel_v
 	else:
-		ctx.escape_radius = INF
-		
-	_update_relative_state(body, ctx)
-	return ctx
-
-func _update_relative_state(body: AbstractBinding, ctx: OrbitalContext) -> void:
-	var parent = body.get_parent_binding()
-	if parent:
-		ctx.r_primary = body.sim_position - parent.sim_position
-		ctx.v_primary = body.sim_velocity - parent.sim_velocity
-	else:
-		ctx.r_primary = body.sim_position
-		ctx.v_primary = body.sim_velocity
+		# Root bodies (Stars) are relative to origin
+		s.r_primary = s.rel_r
+		s.v_primary = s.rel_v
