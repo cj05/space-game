@@ -1,7 +1,7 @@
 # SolverBase.gd
 # Abstract base class for orbital propagation solvers.
 # Provides shared structure: calculate(), propagate(), and utilities.
-
+extends Resource
 class_name AbstractSolver
 
 var mu_locked := false

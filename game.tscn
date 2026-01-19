@@ -9,6 +9,7 @@
 [node name="Sol" type="RigidBody2D" parent="."]
 mass = 6.572652977462916e+15
 script = ExtResource("1_80nbo")
+role = 0
 produces_gravity = true
 mass = 6.572652977462916e+15
 
