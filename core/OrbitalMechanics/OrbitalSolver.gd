@@ -84,6 +84,7 @@ func _apply_kick_to_snapshots(snapshots: Dictionary, dt_factor: float, first_kic
 		# Dirtiness check
 		if accel != Vector2.ZERO or impulse != Vector2.ZERO:
 			s.is_dirty = true
+			#print(accel,impulse)
 
 func _solve_snapshot_orbit(s: SimulationSnapshot, body:AbstractBinding, dt: float, is_ghost: bool):
 	var solver = s.solver

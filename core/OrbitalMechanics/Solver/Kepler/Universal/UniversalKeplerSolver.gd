@@ -20,8 +20,9 @@ var v: Vector2
 var alpha: float        # 1 / a
 var t: float = 0.0      # time since epoch
 var dt: float  = 0.0
-var pchi:float = 0.0    # for better newt. guess
-var last_t:float = 0.0
+
+var _chi_solver := KeplerChiSolver.new()
+
 
 # --- Constants ---------------------------------------------------------------
 
@@ -46,12 +47,11 @@ func from_cartesian(relative_position: Vector2, relative_velocity: Vector2) -> v
 	alpha = 2.0 / rmag - v2 / mu
 	
 	compute_params() # for drawer
-
+	_chi_solver.reset(r_epoch, v_epoch, mu, alpha)
 
 # --- Propagation -------------------------------------------------------------
 
 func propagate(dt: float) -> void:
-	self.last_t = t
 	t += dt
 	self.dt = dt
 	
@@ -63,51 +63,20 @@ func propagate(dt: float) -> void:
 			t = fmod(t, period)
 			# Resetting chi slightly helps prevent pchi from carrying 
 			# error across the modulo jump
-			pchi = fmod(pchi, sqrt(alpha) * period)
+			_chi_solver.pchi = fmod(_chi_solver.pchi, sqrt(alpha) * period)
 
 
 # --- Output ------------------------------------------------------------------
 
 # --- Refactored Kepler Logic -------------------------------------------------
 
-# 1. Finds the universal variable chi for a specific time t
-func solve_chi(target_t: float, chi_guess: float = -1.0) -> float:
-	var r0mag := r_epoch.length()
-	var vr0 := r_epoch.dot(v_epoch) / r0mag
-	var sqrt_mu := sqrt(mu)
-	
-	# Use provided guess or calculate a fallback
-	var chi: float = chi_guess
-	if chi < 0:
-		chi = crude_pchi_guess(sqrt_mu,r0mag,target_t)
-	var cnt = 0
-	for _i in range(MAX_ITERS):
-		cnt+=1
-		var z := alpha * chi * chi
-		var C := stumpff_C(z)
-		var S := stumpff_S(z)
-
-		# f(chi) = r0*vr0/sqrt(mu) * chi^2 * C + (1 - alpha*r0) * chi^3 * S + r0*chi - sqrt(mu)*t
-		var F := (r0mag * vr0 / sqrt_mu) * chi * chi * C + \
-				 (1.0 - alpha * r0mag) * chi * chi * chi * S + \
-				 r0mag * chi - sqrt_mu * target_t
-
-		# df/dchi = r (the current radius)
-		var dF := (r0mag * vr0 / sqrt_mu) * chi * (1.0 - z * S) + \
-				  (1.0 - alpha * r0mag) * chi * chi * C + r0mag
-
-		var delta := F / dF
-		chi -= delta
-		if abs(delta) < TOL: break
-	return chi
-
 # 2. Converts a solved chi back into r and v vectors
 func get_state_at_chi(chi: float, target_t: float) -> State2D:
 	var r0mag := r_epoch.length()
 	var sqrt_mu := sqrt(mu)
 	var zf := alpha * chi * chi
-	var Cf := stumpff_C(zf)
-	var Sf := stumpff_S(zf)
+	var Cf := KeplerStumpff.C(zf)
+	var Sf := KeplerStumpff.S(zf)
 
 	var f := 1.0 - (chi * chi / r0mag) * Cf
 	var g := target_t - (chi * chi * chi / sqrt_mu) * Sf
@@ -121,34 +90,22 @@ func get_state_at_chi(chi: float, target_t: float) -> State2D:
 
 	return State2D.new(res_r, res_v)
 
-func crude_pchi_guess(sqrt_mu:float,r0mag:float,target_t:float):
-	var chi = sqrt_mu * abs(alpha) * target_t
-	if alpha == 0.0:
-		chi = sqrt_mu * target_t / r0mag 
-	return chi
-
 # 3. Public wrapper (can be called with any future time)
 func to_cartesian(target_t: float = INF) -> State2D:
-	# Determine if we are mutating or just predicting
 	var is_querying := (target_t != INF)
-	var solve_t = target_t if is_querying else t
-	
-	# Warm start: use pchi if we are near the last solved time
-	var guess = pchi if abs(solve_t - last_t) < 1.0 else -1.0
-	
-	var chi = solve_chi(solve_t, guess)
-	var state = get_state_at_chi(chi, solve_t)
-	
-	# ONLY mutate if this is NOT a prediction query
+	var solve_t := target_t if is_querying else t
+
+	var chi := _chi_solver.solve(solve_t)
+	var state := get_state_at_chi(chi, solve_t)
+
 	if not is_querying:
 		r = state.r
 		v = state.v
-		pchi = chi
-		# Refresh derived orientation/anomaly for rendering
 		compute_params()
 		compute_ta()
-	
+
 	return state
+
 # --- Utilities ---------------------------------------------------------------
 func radius() -> float:
 	return r.length()
@@ -287,27 +244,3 @@ func time_to_radius(target_r: float) -> float:
 
 	return 0.5 * (t_lo + t_hi)
 			
-# --- Stumpff Functions -------------------------------------------------------
-
-static func stumpff_C(z: float) -> float:
-	if abs(z) < 1e-5:
-		return 0.5 - z / 24.0 + z * z / 720.0
-
-	if z > 0.0:
-		var s := sqrt(z)
-		return (1.0 - cos(s)) / z
-	else:
-		var s := sqrt(-z)
-		return (cosh(s) - 1.0) / (-z)
-
-
-static func stumpff_S(z: float) -> float:
-	if abs(z) < 1e-5:
-		return 1.0 / 6.0 - z / 120.0 + z * z / 5040.0
-
-	if z > 0.0:
-		var s := sqrt(z)
-		return (s - sin(s)) / (s * s * s)
-	else:
-		var s := sqrt(-z)
-		return (sinh(s) - s) / (s * s * s)

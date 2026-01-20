@@ -57,13 +57,18 @@ func get_substep_state(sample_time: float, is_ghost: bool) -> SimulationState:
 	
 	if _substep_cache.has(key):
 		_substep_cache_hits += 1
-		return _substep_cache[key]
+		var resulting_cache = _substep_cache[key]
+		if not is_ghost:
+			var dt := key
+			var state := SimulationState.new(sample_time)
+			_substep_cache.clear()
+			emit_signal("integrate", dt, is_ghost, state.snapshots)
+			# or replace this with propagation using snapshot later
+		return resulting_cache
+		
 	_substep_cache_misses += 1 # ouchie
 	var state := SimulationState.new(sample_time)
 	var dt := key
-	
-	
-
 	if dt > 0.0:
 		emit_signal("integrate", dt, is_ghost, state.snapshots)
 	
