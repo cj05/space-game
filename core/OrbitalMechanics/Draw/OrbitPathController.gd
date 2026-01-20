@@ -11,7 +11,7 @@ class_name OrbitPathController
 @export_range(1, 6) var smooth_stages = 4
 
 var segments = []
-
+var soi_label: Label
 
 # ------------------------------------------------------------
 # Lifecycle
@@ -20,7 +20,14 @@ var segments = []
 func _ready():
 	top_level = true
 	_clear_segments()
+	_setup_label()
 
+func _setup_label():
+	if not soi_label:
+		soi_label = Label.new()
+		soi_label.add_theme_color_override("font_outline_color", Color.BLACK)
+		soi_label.add_theme_constant_override("outline_size", 4)
+		add_child(soi_label)
 
 func _physics_process(_dt):
 	var state = get_parent()
@@ -40,6 +47,8 @@ func _clear_segments():
 	for s in segments:
 		s.queue_free()
 	segments.clear()
+	if soi_label: 
+		soi_label.visible = false
 
 
 func _new_segment():
@@ -77,46 +86,47 @@ func _draw_orbit(state):
 # ------------------------------------------------------------
 
 func _draw_elliptic(state, solver):
-	var line = _new_segment()
-	var pts = []
 	var nu0 = solver.get_true_anomaly()
-	
-	# --- 1. Determine SOI Limits ---
 	var soi_r = state.get_parent_soi()
-	var e = solver.ecc
-	var a = solver.sma
-	var p_parameter = a * (1.0 - e * e)
-	
-	var nu_min = -PI
-	var nu_max = PI
-	
-	# If apoapsis exceeds SOI, calculate the exit/entry angles
-	var apoapsis = a * (1.0 + e)
-	if apoapsis > soi_r:
-		var cos_nu_soi = ((p_parameter / soi_r) - 1.0) / e
-		# Ensure we stay within acos range [-1, 1]
-		var safe_cos = clamp(cos_nu_soi, -1.0, 1.0)
-		var nu_soi = acos(safe_cos)
-		
-		nu_min = -nu_soi
-		nu_max = nu_soi
+	var planet_pos = state.get_parent_binding().get_global_position() 
+	var h = state.get_angular_momentum()
+	var dir = 1.0 if h > 0 else -1.0
+	var dnu = TAU / max_points
 
-	# --- 2. Sampling ---
-	# We sample from nu_min to nu_max to respect the SOI boundaries
-	var dnu = (nu_max - nu_min) / max_points
-
+	# --- 1. Draw Future Prediction (The line you already have) ---
+	var incomplete = false
+	var future_line = _new_segment()
+	var future_pts = []
+	var exit_pos = Vector2.ZERO
 	for i in range(max_points + 1):
-		var nu = nu_min + float(i) * dnu
-		var p = state.sample_ta(nu)
-		pts.append(p - global_position)
+		var nu = nu0 + (float(i) * dnu * dir)
+		var p_global = state.sample_ta(nu)
+		if p_global.distance_to(planet_pos) > soi_r: 
+			incomplete = true
+			exit_pos = p_global
+			break 
+		future_pts.append(p_global - global_position)
+	_apply_points(future_line, future_pts, elliptic_color)
 
-	# If the orbit is a closed loop (doesn't hit SOI), 
-	# we want the line to connect perfectly at the end.
-	if apoapsis <= soi_r:
-		pts.append(pts[0])
-
-	_apply_points(line, pts, elliptic_color)
-
+	# --- 2. Draw Past History (Trailing Part) ---
+	if not incomplete:
+		return
+	
+	var past_line = _new_segment()
+	var past_pts = []
+	# We step in the opposite direction (-dir)
+	for i in range(max_points + 1):
+		var nu = nu0 - (float(i) * dnu * dir)
+		var p_global = state.sample_ta(nu)
+		
+		# Stop drawing if the trail leaves the SOI
+		if p_global.distance_to(planet_pos) > soi_r: break
+		
+		past_pts.append(p_global - global_position)
+	
+	# Use the past color (ensure your past_trail_color has transparency)
+	_apply_points(past_line, past_pts, past_trail_color)
+	_show_soi_time(state,exit_pos)
 
 # ------------------------------------------------------------
 # Hyperbolic / Parabolic (two disjoint branches)
@@ -141,9 +151,12 @@ func _draw_hyperbolic(state, solver):
 	
 	# Check if the SOI radius is reached before the asymptote
 	var cos_nu_soi = ((p_parameter / soi_r) - 1.0) / e
+	var exiting = false
 	if abs(cos_nu_soi) < 1.0:
 		# Use whichever is smaller: the SOI angle or the safety limit
-		nu_limit = min(nu_limit, acos(cos_nu_soi))
+		if(nu_limit > acos(cos_nu_soi)):
+			nu_limit = acos(cos_nu_soi)
+			exiting = true
 
 	var nu_min = -nu_limit
 	var nu_max =  nu_limit
@@ -207,6 +220,9 @@ func _draw_hyperbolic(state, solver):
 	
 	_apply_points(past_line, past_pts, past_trail_color)
 	_apply_points(future_line, future_pts, hyperbola_future_color)
+	if exiting:
+		_show_soi_time(state,future_pts.back())
+	
 # ------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------
@@ -258,3 +274,10 @@ func _update_gradient(line: Line2D, n: int, base_color: Color):
 	
 func radial_velocity(solver):
 	return solver.r.dot(solver.v)
+
+func _show_soi_time(state, pos: Vector2):
+	if not soi_label: return
+	soi_label.visible = true
+	soi_label.position = pos + Vector2(15, -15)
+	var t = state.get_time_at_soi()
+	soi_label.text = "SOI Exit: " + (str(round(t)) + "s" if t != INF else "N/A")
