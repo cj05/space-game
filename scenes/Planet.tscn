@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://cqhqlinc5j3nh"]
 
 [ext_resource type="Script" uid="uid://vyfi6moqriai" path="res://core/OrbitalMechanics/Binding/RigidBodyOrbitBinding.gd" id="1_744xv"]
-[ext_resource type="Script" uid="uid://bvec3d05on2vp" path="res://core/OrbitalMechanics/Draw/OrbitPredictor.gd" id="2_2ucv6"]
+[ext_resource type="Script" uid="uid://bvec3d05on2vp" path="res://core/OrbitalMechanics/Draw/OrbitPathController.gd" id="2_2ucv6"]
 [ext_resource type="Script" uid="uid://bmvtv3ymwtlsh" path="res://LineTracer.gd" id="3_sskfm"]
 [ext_resource type="Script" uid="uid://bdtqvbmsmi8ks" path="res://scenes/SOITracer.gd" id="4_2ucv6"]
 
@@ -16,13 +16,12 @@ produces_gravity = true
 respond_collision = false
 mass = 6000000000000.0
 
-[node name="LinePredictorDebugger" type="Line2D" parent="." node_paths=PackedStringArray("tracking_node")]
+[node name="LinePredictorDebugger" type="Line2D" parent="."]
 top_level = true
 position = Vector2(0, 100)
 joint_mode = 2
 antialiased = true
 script = ExtResource("2_2ucv6")
-tracking_node = NodePath("..")
 
 [node name="Label" type="Label" parent="."]
 offset_right = 40.0

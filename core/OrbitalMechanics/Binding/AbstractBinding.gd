@@ -233,3 +233,18 @@ func get_time_at_soi():
 	if(not can_escape()): 
 		return INF
 	return get_time_at_radius(get_parent_soi())
+
+func get_local_position_to_parent() -> Vector2:
+	return get_global_position() - get_parent_binding().get_global_position()
+	
+func get_local_velocity_to_parent() -> Vector2:
+	return get_global_velocity() - get_parent_binding().get_global_velocity()
+
+func get_angular_momentum() -> float:
+	# r = position relative to the center of gravity
+	# v = velocity relative to the center of gravity
+	var r = get_local_position_to_parent() 
+	var v = get_local_velocity_to_parent()
+	
+	# 2D Cross Product: (x1 * y2) - (y1 * x2)
+	return r.cross(v)
