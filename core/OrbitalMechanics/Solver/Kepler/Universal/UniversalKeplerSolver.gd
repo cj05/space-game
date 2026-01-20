@@ -225,7 +225,7 @@ func time_to_radius(target_r: float) -> float:
 	const MAX_BRACKET_STEPS := 5
 	const MAX_ITERS := 5
 	const TOL := 1        # distance tolerance (meters)
-	const DT_INITIAL := 60.0  # seconds
+	const DT_INITIAL := 10.0  # seconds
 
 	var t0 :float = t
 	var s0 := to_cartesian(t0)

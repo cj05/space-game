@@ -50,6 +50,7 @@ func get_body() -> Node:
 # --- cached force appliers -------------------------------------------------
 var constant_forces: Vector2 = Vector2.ZERO
 var pending_impulse: Vector2 = Vector2.ZERO
+var pending_torque: float = 0
 
 # --- lifecycle -------------------------------------------------------------
 
@@ -62,14 +63,24 @@ func _enter_tree():
 
 func _exit_tree() -> void:
 	_unregister()
-	
+
+func apply_instant_torque(torque):
+	self.pending_torque += torque
+
 func _integrate_forces(state:PhysicsDirectBodyState2D) -> void:
 	
 	
 	if not collision_handle(state):
 		apply_displacement(state)
-	#print(state.linear_velocity)
+	else:
+		crude_integrate_forces(state) # replace this whole thing with events
 	
+	state.apply_torque_impulse(pending_torque * state.step)
+	pending_torque = 0
+	#print(state.linear_velocity)
+
+func crude_integrate_forces(state:PhysicsDirectBodyState2D):
+	pass
 
 func collision_handle(state:PhysicsDirectBodyState2D) -> bool:
 	return false

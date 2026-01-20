@@ -1,8 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://tbayrlg2dqem"]
+[gd_scene load_steps=6 format=3 uid="uid://tbayrlg2dqem"]
 
 [ext_resource type="Script" uid="uid://vyfi6moqriai" path="res://core/OrbitalMechanics/Binding/RigidBodyOrbitBinding.gd" id="1_80nbo"]
 [ext_resource type="PackedScene" uid="uid://cqhqlinc5j3nh" path="res://scenes/Planet.tscn" id="3_feb5d"]
+[ext_resource type="PackedScene" uid="uid://cive3v5dtwux5" path="res://scenes/Missile.tscn" id="4_7jktm"]
 [ext_resource type="PackedScene" uid="uid://do4t8angm5s7v" path="res://scenes/Craft.tscn" id="4_fc0e3"]
+[ext_resource type="Script" uid="uid://d3f71fwb62opj" path="res://homing.gd" id="5_7jktm"]
 
 [node name="Universe" type="Node2D"]
 
@@ -31,5 +33,258 @@ linear_velocity = Vector2(0, 20.944)
 fixed_primary_node = NodePath("../Sol")
 mass = 117575190800988.0
 
-[node name="Intercept2" parent="." instance=ExtResource("4_fc0e3")]
-position = Vector2(500, 0)
+[node name="missile" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile2" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile2" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile3" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile3" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile4" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile4" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile5" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile5" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile6" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile6" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile7" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile7" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile8" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile8" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile9" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile9" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile10" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile10" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile11" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile11" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile12" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile12" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile13" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile13" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile14" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile14" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile15" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile15" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile16" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile16" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile17" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile17" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile18" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile18" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile19" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile19" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile20" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile20" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile21" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile21" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile22" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile22" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile23" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile23" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile24" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile24" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile25" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile25" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile26" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile26" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile27" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile27" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile28" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile28" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile29" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile29" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile30" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile30" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile31" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1396, 7)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile31" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")
+
+[node name="missile32" parent="." instance=ExtResource("4_7jktm")]
+position = Vector2(1381, 115)
+linear_velocity = Vector2(0, 20)
+
+[node name="Node2" type="Node" parent="missile32" node_paths=PackedStringArray("target")]
+script = ExtResource("5_7jktm")
+target = NodePath("../../Intercept")

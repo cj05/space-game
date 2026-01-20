@@ -1,0 +1,39 @@
+[gd_scene load_steps=5 format=3 uid="uid://cive3v5dtwux5"]
+
+[ext_resource type="Script" uid="uid://vyfi6moqriai" path="res://core/OrbitalMechanics/Binding/RigidBodyOrbitBinding.gd" id="1_iru0s"]
+[ext_resource type="Script" uid="uid://bmvtv3ymwtlsh" path="res://LineTracer.gd" id="2_7880j"]
+[ext_resource type="Script" uid="uid://bvec3d05on2vp" path="res://core/OrbitalMechanics/Draw/OrbitPathController.gd" id="4_fqlqp"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lhxn1"]
+size = Vector2(3, 12)
+
+[node name="RigidBody2D" type="RigidBody2D"]
+mass = 1.0
+script = ExtResource("1_iru0s")
+role = 4
+mass = 1.0
+
+[node name="Label" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "missile"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="LineTracerDebugger" type="Line2D" parent="." node_paths=PackedStringArray("tracking_node")]
+top_level = true
+position = Vector2(0, 100)
+joint_mode = 2
+antialiased = true
+script = ExtResource("2_7880j")
+tracking_node = NodePath("..")
+max_points = 100
+color = Color(1, 1, 1, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_lhxn1")
+
+[node name="OrbitPathController" type="Node2D" parent="."]
+script = ExtResource("4_fqlqp")
+metadata/_custom_type_script = "uid://bvec3d05on2vp"

@@ -79,12 +79,17 @@ func apply_immediate_impulse(impulse: Vector2):
 	sim_position = get_global_position()
 	
 	# 3. Print with safety check
-	if mu > 0:
-		print("Energy: ", calculate_orbital_energy(sim_position, sim_velocity, parent_pos, parent_vel, mu))
+	#if mu > 0:
+		#print("Energy: ", calculate_orbital_energy(sim_position, sim_velocity, parent_pos, parent_vel, mu))
 	
 	# 4. Trigger the solver re-anchor
 	solver_dirty = true
 
+func crude_integrate_forces(state:PhysicsDirectBodyState2D):
+	var dt = get_physics_process_delta_time()
+	state.apply_central_impulse(pending_impulse + constant_forces *dt)
+	pending_impulse = Vector2.ZERO
+	constant_forces = Vector2.ZERO
 
 func calculate_orbital_energy(pos: Vector2, vel: Vector2, parent_pos:Vector2, parent_vel:Vector2, mu: float) -> float:
 	# 1. Calculate the distance (r) and speed squared (v^2)

@@ -28,10 +28,10 @@ func collision_handle(state:PhysicsDirectBodyState2D) -> bool:
 			var impulse := state.get_contact_impulse(i)
 
 			if collider:
-				print("Contact no",i)
+				#print("Contact no",i)
 				#print("Collided with:", collider.name)
 				#print("Normal:", normal)
-				print("Impulse:", impulse)
+				#print("Impulse:", impulse)
 				
 				apply_immediate_impulse(impulse)
 				

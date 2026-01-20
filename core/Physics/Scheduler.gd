@@ -15,10 +15,28 @@ var current_frame_dt := 0.0 # Added: Ruler for the current step
 var _counter := 0
 var _queue: Heap
 var _last_valid_snapshots: Dictionary = {}
+var _substep_cache := {}
+var _substep_cache_hits := 0
+var _substep_cache_misses := 0
+
+func get_substep_cache_stats() -> Dictionary:
+	return {
+		"hits": _substep_cache_hits,
+		"misses": _substep_cache_misses,
+		"size": _substep_cache.size()
+	}
 
 func _physics_process(delta: float):
 	if not enabled: return
 	step(delta * time_scale)
+	
+	var s = get_substep_cache_stats()
+	print(
+		"[Scheduler] substep cache: ",
+		s.hits, " hits / ",
+		s.misses, " misses (",
+		s.size, " entries)"
+	)
 	emit_signal("post_step",sim_time)
 
 func _ready():
@@ -34,7 +52,30 @@ func next_order() -> int: # Added: Helper for event priority
 func schedule_task(task: ScheduledTask):
 	_queue.push(task)
 
+func get_substep_state(sample_time: float, is_ghost: bool) -> SimulationState:
+	var key := sample_time - sim_time
+	
+	if _substep_cache.has(key):
+		_substep_cache_hits += 1
+		return _substep_cache[key]
+	_substep_cache_misses += 1 # ouchie
+	var state := SimulationState.new(sample_time)
+	var dt := key
+	
+	
+
+	if dt > 0.0:
+		emit_signal("integrate", dt, is_ghost, state.snapshots)
+	
+	if not is_ghost:
+		_substep_cache.clear()
+	_substep_cache[key] = state
+	return state
+
 func step(delta: float) -> void:
+	_substep_cache.clear()
+	_substep_cache_hits = 0
+	_substep_cache_misses = 0
 	current_frame_dt = delta # Set the ruler at start of step
 	var target_time := sim_time + delta
 	
@@ -47,14 +88,10 @@ func step(delta: float) -> void:
 		_queue.pop()
 		
 		var sample_point = task.exec_t if task.ghost else task.time
-		var integrate_dt = sample_point - sim_time
-		var state = SimulationState.new(sample_point)
-		
-		if integrate_dt > 0.0:
-			emit_signal("integrate", integrate_dt, task.ghost, state.snapshots)
-			if not task.ghost:
-				sim_time = task.time
-				_last_valid_snapshots = state.snapshots
+		var state := get_substep_state(sample_point, task.ghost)
+		if not task.ghost:
+			sim_time = task.time
+			_last_valid_snapshots = state.snapshots
 
 		var result = task.fn.call(state) # Pass the full state object
 		

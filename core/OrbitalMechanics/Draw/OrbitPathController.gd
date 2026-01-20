@@ -1,7 +1,10 @@
 extends Node2D
 class_name OrbitPathController
 
-@export var max_points = 200
+var orbit_dirty := true
+var _last_solver_hash := 0
+
+@export var max_points = 10
 @export var line_width = 2.0
 @export_group("Colors")
 @export var elliptic_color = Color.AQUA
@@ -9,6 +12,7 @@ class_name OrbitPathController
 @export var past_trail_color = Color(1, 1, 0.5,0.5) # Faded Gray
 @export var trail_alpha = 0.2
 @export_range(1, 6) var smooth_stages = 4
+
 
 var segments = []
 var soi_label: Label
@@ -29,14 +33,34 @@ func _setup_label():
 		soi_label.add_theme_constant_override("outline_size", 4)
 		add_child(soi_label)
 
-func _physics_process(_dt):
+func _process(_dt):
 	var state = get_parent()
-	if not state:
-		return
-	if not state is AbstractBinding:
+	if not state or not state is AbstractBinding:
 		return
 
-	_draw_orbit(state)
+	var solver = state.sim_solver
+	if not solver:
+		return
+
+	# Cheap change detection (drop-in safe)
+	var h := _compute_solver_hash(state, solver)
+	if h != _last_solver_hash:
+		orbit_dirty = true
+		_last_solver_hash = h
+
+	if orbit_dirty:
+		_draw_orbit(state)
+		orbit_dirty = false
+
+
+func _compute_solver_hash(state, solver) -> int:
+	var h := 17
+	h = h * 31 + int(solver.alpha * 1e6)
+	h = h * 31 + int(solver.ecc * 1e6)
+	h = h * 31 + int(solver.sma * 1e3)
+	h = h * 31 + int(state.get_parent_soi())
+	h = h * 31 + (1 if state.get_parent_binding() else 0)
+	return h
 
 
 # ------------------------------------------------------------
@@ -45,10 +69,10 @@ func _physics_process(_dt):
 
 func _clear_segments():
 	for s in segments:
-		s.queue_free()
-	segments.clear()
-	if soi_label: 
+		s.clear_points()
+	if soi_label:
 		soi_label.visible = false
+
 
 
 func _new_segment():
@@ -173,6 +197,8 @@ func _draw_hyperbolic(state, solver):
 	var all_pts = []
 	var nu_samples = []
 	var dnu = (nu_max - nu_min) / float(max_points)
+	
+	
 
 	for i in range(max_points + 1):
 		var nu = nu_min + float(i) * dnu
@@ -276,8 +302,5 @@ func radial_velocity(solver):
 	return solver.r.dot(solver.v)
 
 func _show_soi_time(state, pos: Vector2):
-	if not soi_label: return
-	soi_label.visible = true
-	soi_label.position = pos + Vector2(15, -15)
-	var t = state.get_time_at_soi()
-	soi_label.text = "SOI Exit: " + (str(round(t)) + "s" if t != INF else "N/A")
+	return
+	
