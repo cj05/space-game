@@ -79,4 +79,7 @@ func get_eccentricity()->float:
 func sample_point_at(true_anomaly:float) -> Vector2:
 	return Vector2.ZERO
 
+func time_to_radius(target_r: float) -> float:
+	return 0
+
 # Subclasses must implement all of the functions

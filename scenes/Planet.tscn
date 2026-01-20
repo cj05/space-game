@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://bdtqvbmsmi8ks" path="res://scenes/SOITracer.gd" id="4_2ucv6"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_744xv"]
-radius = 100.0
+radius = 20.0
 
 [node name="RigidBody2D" type="RigidBody2D"]
 mass = 6000000000000.0
@@ -23,7 +23,6 @@ joint_mode = 2
 antialiased = true
 script = ExtResource("2_2ucv6")
 tracking_node = NodePath("..")
-color = Color(0.9386945, 1.347661e-06, 0.52546465, 1)
 
 [node name="Label" type="Label" parent="."]
 offset_right = 40.0

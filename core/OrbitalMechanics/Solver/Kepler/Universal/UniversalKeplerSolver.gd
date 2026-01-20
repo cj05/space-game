@@ -222,60 +222,70 @@ func compute_ta() -> void:
 		
 #Exit Time calc
 func time_to_radius(target_r: float) -> float:
-	# 1. Physical Bounds Check
-	if alpha > 0.0:
-		if target_r < periapsis_radius() - 1e-4 or target_r > apoapsis_radius() + 1e-4:
+	const MAX_BRACKET_STEPS := 5
+	const MAX_ITERS := 5
+	const TOL := 1        # distance tolerance (meters)
+	const DT_INITIAL := 1.0  # seconds
+
+	var t0 :float = t
+	var s0 := to_cartesian(t0)
+	if not s0:
+		return INF
+
+	var r0 := s0.r.length()
+
+	# Already at radius
+	if abs(r0 - target_r) < TOL:
+		return t0
+
+	# --- Bracket in time ---
+	var t_lo := t0
+	var r_lo := r0
+
+	var dt := DT_INITIAL
+	var t_hi := t_lo
+	var r_hi := r_lo
+
+	for _i in range(MAX_BRACKET_STEPS):
+		t_hi += dt
+		var s_hi := to_cartesian(t_hi)
+		if not s_hi:
 			return INF
 
-	var r0mag := r_epoch.length()
-	var vr0_sqrt_mu := r_epoch.dot(v_epoch) / sqrt(mu)
-	
-	# 2. Starting Guess
-	# If starting at periapsis (chi=0), we nudge it slightly positive 
-	# to search "forward" in time.
-	var chi: float = pchi
-	if abs(chi) < 1e-7: chi = 0.1 
-	var conv_count = 0
-	for _i in range(MAX_ITERS):
-		conv_count+=1
-		var z = alpha * chi * chi
-		var c = stumpff_C(z)
-		var s = stumpff_S(z)
+		r_hi = s_hi.r.length()
 
-		# Current radius at this chi
-		var r_val = (chi * chi * c) + (vr0_sqrt_mu * chi * (1.0 - z * s)) + (r0mag * (1.0 - z * c))
-		
-		# Derivative dr/dchi
-		var dr_dchi = (chi * (1.0 - z * s)) \
-		   + (vr0_sqrt_mu * (1.0 - z * c)) \
-		   + (r0mag * alpha * chi * s)
-
-		# --- THE FIX: Damping / Clamping ---
-		# Prevent division by zero and massive jumps that skip the first solution
-		if abs(dr_dchi) < 1e-9: dr_dchi = 1e-9 * sign(dr_dchi)
-		
-		var delta = (r_val - target_r) / dr_dchi
-		
-		# Limit the change to 1.0 per iteration to prevent "teleporting"
-		delta = clamp(delta, -1.0, 1.0)
-		
-		chi -= delta
-		
-		if alpha > 0.0:
-			var chi_apo := PI / sqrt(alpha)
-			chi = clamp(chi, 0.0, chi_apo)
-
-		if abs(delta) < TOL:
+		# Sign change => root bracketed
+		if (r_lo - target_r) * (r_hi - target_r) <= 0.0:
 			break
-	
-	if is_nan(chi): return INF
 
-	# 3. Final Conversion to Time
-	var z_final = alpha * chi * chi
-	return ((1.0 - alpha * r0mag) * chi * chi * chi * stumpff_S(z_final) + \
-		vr0_sqrt_mu * chi * chi * stumpff_C(z_final) + \
-		r0mag * chi) / sqrt(mu)
-			
+		t_lo = t_hi
+		r_lo = r_hi
+		dt *= 2.0
+
+	# Failed to bracket
+	if (r_lo - target_r) * (r_hi - target_r) > 0.0:
+		return INF
+
+	# --- Bisection (guaranteed convergence) ---
+	for _i in range(MAX_ITERS):
+		var t_mid := 0.5 * (t_lo + t_hi)
+		var s_mid := to_cartesian(t_mid)
+		if not s_mid:
+			return INF
+
+		var r_mid := s_mid.r.length()
+
+		if abs(r_mid - target_r) < TOL:
+			return t_mid
+
+		if (r_lo - target_r) * (r_mid - target_r) <= 0.0:
+			t_hi = t_mid
+			r_hi = r_mid
+		else:
+			t_lo = t_mid
+			r_lo = r_mid
+
+	return 0.5 * (t_lo + t_hi)
 			
 # --- Stumpff Functions -------------------------------------------------------
 

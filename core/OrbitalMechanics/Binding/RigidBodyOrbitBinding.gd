@@ -110,7 +110,7 @@ func get_soi_radius()->float:
 	if get_parent_binding():
 		#print("HH")
 		return OrbitalHierarchy.compute_soi_radius(self, get_parent_binding())
-	return 0
+	return INF
 
 func period() -> float:
 	var parent = get_parent_binding()

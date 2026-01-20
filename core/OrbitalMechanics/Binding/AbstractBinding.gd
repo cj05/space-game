@@ -114,14 +114,31 @@ func get_mu() -> float:
 
 # --- drawer hooks ----------------------------------------------------------
 
-func sample(true_anomaly:float) -> Vector2: #
-	if not sim_solver: 
+func sample_ta(true_anomaly: float) -> Vector2:
+	if not sim_solver:
 		return Vector2.ZERO
-	var offset = Vector2.ZERO
-	var parent = get_parent_binding()
+
+	var local := sim_solver.sample_point_at(true_anomaly)
+
+	var parent := get_parent_binding()
 	if parent:
-		offset += parent.get_body().global_position
-	return sim_solver.sample_point_at(true_anomaly) + offset
+		return parent.get_body().global_position + local
+
+	return local
+
+	
+func sample_t_world(t: float) -> State2D:
+	var local :State2D = sim_solver.to_cartesian(t)
+	if not local:
+		return null
+
+	var parent := get_parent_binding()
+	if parent:
+		local.r += parent.get_global_position()
+		local.v += parent.get_global_velocity()
+
+	return local
+	
 	
 func get_true_anomaly()->float:
 	if sim_solver:
@@ -151,7 +168,7 @@ func get_global_position()->Vector2:
 func get_global_velocity()->Vector2:
 	return Vector2.ZERO
 func get_soi_radius()->float:
-	return 0
+	return INF
 func add_force(f: Vector2):
 	constant_forces += f
 func get_accumulated_acceleration() -> Vector2:
@@ -200,5 +217,19 @@ func perform_soi_transition(new_parent: AbstractBinding) -> void:
 	_on_enter_soi(new_parent)
 	
 	# -------------------------
-	
-	
+
+func get_time_at_radius(radius:float):
+	return sim_solver.time_to_radius(radius)
+
+func get_parent_soi():
+	return get_parent_binding().get_soi_radius()
+
+func can_escape():
+	if get_parent_soi() == INF: return false
+	print("RAD",get_parent_soi())
+	return sim_solver.apoapsis_radius() > get_parent_soi()
+
+func get_time_at_soi():
+	if(not can_escape()): 
+		return INF
+	return get_time_at_radius(get_parent_soi())
