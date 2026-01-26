@@ -20,12 +20,12 @@ func test_solve_chi_logic() -> void:
 	# After 1/4 of a period (T = TAU), chi should be predictable.
 	# For a circular unit orbit, chi at t=PI/2 is roughly 1.57
 	var target_t := PI / 2.0
-	var chi = solver.solve_chi(target_t, -1.0)
+	var chi = solver.solve_chi(target_t)
 	
 	assert_gt(chi, 0.0, "Chi should be positive for forward time")
 	
 	# Verify chi by plugging it into the state generator
-	var state = solver.get_state_at_chi(chi, target_t)
+	var state = solver.state_from_chi(chi, target_t)
 	
 	# At 1/4 orbit, pos should be approx (0, 1)
 	assert_almost_eq(state.r.x, 0.0, 1e-5, "Position X error at solved chi")
@@ -40,10 +40,10 @@ func test_get_state_at_chi_mapping() -> void:
 	
 	# Manually solve chi for a specific time
 	var t_val := 1.0
-	var chi = solver.solve_chi(t_val, -1.0)
+	var chi = solver.solve_chi(t_val)
 	
 	# Generate state
-	var state = solver.get_state_at_chi(chi, t_val)
+	var state = solver.state_from_chi(chi, t_val)
 	
 	# Test that the energy of the generated state matches the energy of the epoch
 	# This proves the f and g functions are maintaining orbital consistency
@@ -90,16 +90,16 @@ func test_pchi_warm_start_persistence() -> void:
 	var solver = create_test_solver(mu, r0, v0)
 	
 	# Initial pchi is 0
-	assert_eq(solver.pchi, 0.0)
+	assert_eq(solver._chi_solver.pchi, 0.0)
 	
 	# Calling to_cartesian with target_t < 0 should update pchi
 	solver.propagate(1.0)
 	var _state = solver.to_cartesian(-1.0)
 	
-	assert_ne(solver.pchi, 0.0, "pchi should have been updated after propagation")
+	assert_ne(solver._chi_solver.pchi, 0.0, "pchi should have been updated after propagation")
 	
 	# Calling with a specific time (prediction) should NOT update the main pchi
-	var old_pchi = solver.pchi
+	var old_pchi = solver._chi_solver.pchi
 	var _pred = solver.to_cartesian(50.0)
 	
-	assert_eq(solver.pchi, old_pchi, "pchi should not be modified by prediction calls")
+	assert_eq(solver._chi_solver.pchi, old_pchi, "pchi should not be modified by prediction calls")

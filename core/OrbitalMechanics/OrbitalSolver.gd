@@ -86,51 +86,84 @@ func _apply_kick_to_snapshots(snapshots: Dictionary, dt_factor: float, first_kic
 			s.is_dirty = true
 			#print(accel,impulse)
 
+func _now_us() -> int:
+	return Time.get_ticks_usec()
+
 func _solve_snapshot_orbit(s: SimulationSnapshot, body:AbstractBinding, dt: float, is_ghost: bool):
+	var t0 := _now_us()
+
 	var solver = s.solver
-	var start_rel_r = s.rel_r # For Debug
-	var start_rel_v = s.rel_v # For Debug
-	
-	
-	
+	var start_rel_r = s.rel_r
+	var start_rel_v = s.rel_v
+
+	var t_init := _now_us()
+
+	# ------------------------------------------------
 	# 1. Sync Mu
+	# ------------------------------------------------
 	if not solver.set_mu(s.mu):
+		var t_recreate_start := _now_us()
 		solver = create_solver(body)
 		s.solver = solver
-		print("Recreat")
 		if not solver.set_mu(s.mu):
-			# Fallback if solver fails or Mu is zero
 			s.rel_r += s.rel_v * dt
-			print("SimSolver: MU failure")
+			print("MU fallback time:", _now_us() - t_recreate_start, "us")
 			return
+		print("Solver recreate time:", _now_us() - t_recreate_start, "us")
 
-	# 2. Solver Sync (Perturbations)
+	var t_mu := _now_us()
+
+	# ------------------------------------------------
+	# 2. Solver Sync (Dirty)
+	# ------------------------------------------------
 	if s.is_dirty:
+		#var t_dirty_start := _now_us()
 		solver.from_cartesian(s.rel_r, s.rel_v)
-		# s.is_dirty is cleared after we are sure we won't need it again this step
-	
-	# 3. Propagate
+		s.is_dirty = false
+		#print("Dirty sync time:", _now_us() - t_dirty_start, "us")
+
+	var t_dirty := _now_us()
+
+	# ------------------------------------------------
+	# 3. Propagation / Cartesian
+	# ------------------------------------------------
 	var state: State2D
+	var t_prop_start := _now_us()
+
 	if is_ghost:
 		state = solver.to_cartesian(solver.t + dt)
 	else:
 		solver.propagate(dt)
 		state = solver.to_cartesian()
-	
-	# 4. Apply result with NaN safety
+
+	var t_prop := _now_us()
+
+	# ------------------------------------------------
+	# 4. Apply + NaN safety
+	# ------------------------------------------------
+	var t_apply_start := _now_us()
+
 	if is_vec2_nan(state.r) or is_vec2_nan(state.v):
-		#push_warning("Orbit Solver NaN for %s, falling back to Euler %s %s" % [s.body.name,start_rel_r,start_rel_v])
 		s.rel_r += s.rel_v * dt
 	else:
 		s.rel_r = state.r
 		s.rel_v = state.v
-	
-	# --- DEBUG PRINTS ---
-	if is_ghost:
-		var dist = start_rel_r.distance_to(s.rel_r)
-		#print("[Ghost Solve] %s | Moved: %.4f | Snapshot Rel_R: %s" % [s.body.name, dist, s.rel_r])
-		if s.body.sim_position != s.body_start_sim_pos:
-			push_error("[CRITICAL] Ghost step mutated real body: %s" % s.body.name)
+
+	var t_apply := _now_us()
+
+	# ------------------------------------------------
+	# TOTAL
+	# ------------------------------------------------
+	var t_end := _now_us()
+
+	prints(
+		"Total:", t_end - t0, "us |",
+		"init:", t_init - t0,
+		"mu:", t_mu - t_init,
+		"dirty:", t_dirty - t_mu,
+		"prop+cart:", t_prop - t_dirty,
+		"apply:", t_apply - t_prop
+	)
 
 func _resolve_global_states(snapshots: Dictionary):
 	var visit_state := {} 
@@ -161,18 +194,21 @@ func _calculate_recursive(body: AbstractBinding, snapshots: Dictionary, visit_ma
 	visit_map[body] = 2
 
 func _reintegrate_snapshots(snapshots: Dictionary) -> void:
-	for body in snapshots.keys():
+	for body:AbstractBinding in snapshots.keys():
 		var s: SimulationSnapshot = snapshots[body]
 		
 		# USE RELATIVE, NOT GLOBAL
 		body.sim_position = s.global_r
 		body.sim_velocity = s.global_v
 		
+		body.solver_dirty = s.is_dirty
+		
 		# Ensure the solver knows exactly what its primary was doing
 		if body.sim_context:
 			body.sim_context.mu = s.mu
 			body.sim_context.r_primary = s.r_primary
 			body.sim_context.v_primary = s.v_primary
+			
 	
 func is_vec2_nan(v: Vector2) -> bool:
 	return is_nan(v.x) or is_nan(v.y)

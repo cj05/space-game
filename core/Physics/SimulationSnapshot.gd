@@ -32,9 +32,11 @@ func _init(_body: AbstractBinding, _solver: AbstractSolver, is_ghost: bool):
 	if is_ghost and _solver:
 		# Use duplicate if it exists, otherwise manual clone or reference
 		if _solver.has_method("duplicate"):
-			self.solver = _solver.duplicate()
+			self.solver = _solver
+			#self.solver = _solver.duplicate()
 		elif _solver.has_method("clone"):
-			self.solver = _solver.clone()
+			self.solver = _solver
+			#self.solver = _solver.clone()
 		else:
 			self.solver = _solver
 	else:

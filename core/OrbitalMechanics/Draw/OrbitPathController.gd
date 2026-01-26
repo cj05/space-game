@@ -67,24 +67,31 @@ func _compute_solver_hash(state, solver) -> int:
 # Segment management
 # ------------------------------------------------------------
 
+var segment_cursor := 0
+
 func _clear_segments():
+	segment_cursor = 0
 	for s in segments:
-		s.clear_points()
-	if soi_label:
-		soi_label.visible = false
+		s.visible = false
 
-
-
+	
 func _new_segment():
-	var line = Line2D.new()
+	var line: Line2D
+	if segment_cursor < segments.size():
+		line = segments[segment_cursor]
+	else:
+		line = Line2D.new()
+		line.top_level = true
+		line.joint_mode = Line2D.LINE_JOINT_ROUND
+		line.begin_cap_mode = Line2D.LINE_CAP_ROUND
+		line.end_cap_mode = Line2D.LINE_CAP_ROUND
+		line.gradient = Gradient.new()
+		add_child(line)
+		segments.append(line)
 	line.width = line_width or 1
-	line.top_level = true
-	line.joint_mode = Line2D.LINE_JOINT_ROUND
-	line.begin_cap_mode = Line2D.LINE_CAP_ROUND
-	line.end_cap_mode = Line2D.LINE_CAP_ROUND
-	line.gradient = Gradient.new()
-	add_child(line)
-	segments.append(line)
+	line.clear_points()
+	line.visible = true
+	segment_cursor += 1
 	return line
 
 
